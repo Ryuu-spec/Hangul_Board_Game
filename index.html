@@ -3,99 +3,200 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hangul Board Game Frame</title>
+<title>Hangul Board Game</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
-  background: #f5f5f0;
-  min-height: 100vh;
+  width: 100vw;
+  height: 100vh;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  overflow: hidden;
 }
-:root { --cell: 70px; --gap: 4px; }
-
 .board {
-  background: white;
-  border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
   display: grid;
   grid-template-columns: repeat(13, var(--cell));
   grid-template-rows: repeat(7, var(--cell));
   gap: var(--gap);
 }
-
 .cell {
-  border: 2px solid #ccc;
+  border: 2px solid #aaa;
   border-radius: 8px;
-  background: #fafafa;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+}
+.cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.cell.start, .cell.goal {
+  cursor: default;
 }
 </style>
 </head>
 <body>
-<div class="board">
+<div class="board" id="board"></div>
 
-  <!-- Row 1: col 1-5, col 9-13 -->
-  <div class="cell" style="grid-column:1;  grid-row:1"></div>
-  <div class="cell" style="grid-column:2;  grid-row:1"></div>
-  <div class="cell" style="grid-column:3;  grid-row:1"></div>
-  <div class="cell" style="grid-column:4;  grid-row:1"></div>
-  <div class="cell" style="grid-column:5;  grid-row:1"></div>
-  <div class="cell" style="grid-column:9;  grid-row:1"></div>
-  <div class="cell" style="grid-column:10; grid-row:1"></div>
-  <div class="cell" style="grid-column:11; grid-row:1"></div>
-  <div class="cell" style="grid-column:12; grid-row:1"></div>
-  <div class="cell" style="grid-column:13; grid-row:1"></div>
+<script>
+const BASE = 'https://ryuu-spec.github.io/Hangul_Board_Game/image/';
+const SPINNER_BASE = 'https://ryuu-spec.github.io/Hangul-Syllable-spinner/';
 
-  <!-- Row 2: col 1, col 13 -->
-  <div class="cell" style="grid-column:1;  grid-row:2"></div>
-  <div class="cell" style="grid-column:13; grid-row:2"></div>
+const CONS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+const VOWS = ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅚ','ㅛ','ㅜ','ㅝ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 
-  <!-- Row 3: col 1-4, col 10-13 -->
-  <div class="cell" style="grid-column:1;  grid-row:3"></div>
-  <div class="cell" style="grid-column:2;  grid-row:3"></div>
-  <div class="cell" style="grid-column:3;  grid-row:3"></div>
-  <div class="cell" style="grid-column:4;  grid-row:3"></div>
-  <div class="cell" style="grid-column:10; grid-row:3"></div>
-  <div class="cell" style="grid-column:11; grid-row:3"></div>
-  <div class="cell" style="grid-column:12; grid-row:3"></div>
-  <div class="cell" style="grid-column:13; grid-row:3"></div>
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
 
-  <!-- Row 4: col 1, col 13 -->
-  <div class="cell" style="grid-column:4;  grid-row:4"></div>
-  <div class="cell" style="grid-column:10; grid-row:4"></div>
+function openSpinner(type, char) {
+  if (type === 'cons') {
+    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=vowel`, '_blank', 'width=520,height=420');
+  } else if (type === 'vowel') {
+    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=consonant`, '_blank', 'width=520,height=420');
+  } else if (type === 'question') {
+    window.open(`${SPINNER_BASE}Syllable_Spinner.html`, '_blank', 'width=520,height=420');
+  }
+}
 
-  <!-- Row 5: col 1-4, col 10-13 -->
-  <div class="cell" style="grid-column:1;  grid-row:5"></div>
-  <div class="cell" style="grid-column:2;  grid-row:5"></div>
-  <div class="cell" style="grid-column:3;  grid-row:5"></div>
-  <div class="cell" style="grid-column:4;  grid-row:5"></div>
-  <div class="cell" style="grid-column:10; grid-row:5"></div>
-  <div class="cell" style="grid-column:11; grid-row:5"></div>
-  <div class="cell" style="grid-column:12; grid-row:5"></div>
-  <div class="cell" style="grid-column:13; grid-row:5"></div>
+// 보드 칸 순서 (총 45칸: 자음19 + 모음16 + START1 + GOAL1 + 나머지8)
+// 순서: row1(col1-5), row2(col1,13), row3(col1-4,10-13), row4(col4,10), row5(col1-4,10-13), row6(col1,13), row7(col1-13)
+// 총 10+2+8+2+8+2+13 = 45칸
 
-  <!-- Row 6: col 1, col 13 -->
-  <div class="cell" style="grid-column:1;  grid-row:6"></div>
-  <div class="cell" style="grid-column:13; grid-row:6"></div>
+const POSITIONS = [
+  // Row 1
+  {col:1,row:1}, {col:2,row:1}, {col:3,row:1}, {col:4,row:1}, {col:5,row:1},
+  {col:9,row:1}, {col:10,row:1}, {col:11,row:1}, {col:12,row:1}, {col:13,row:1},
+  // Row 2
+  {col:1,row:2}, {col:13,row:2},
+  // Row 3
+  {col:1,row:3}, {col:2,row:3}, {col:3,row:3}, {col:4,row:3},
+  {col:10,row:3}, {col:11,row:3}, {col:12,row:3}, {col:13,row:3},
+  // Row 4
+  {col:4,row:4}, {col:10,row:4},
+  // Row 5
+  {col:1,row:5}, {col:2,row:5}, {col:3,row:5}, {col:4,row:5},
+  {col:10,row:5}, {col:11,row:5}, {col:12,row:5}, {col:13,row:5},
+  // Row 6
+  {col:1,row:6}, {col:13,row:6},
+  // Row 7
+  {col:1,row:7}, {col:2,row:7}, {col:3,row:7}, {col:4,row:7}, {col:5,row:7},
+  {col:6,row:7}, {col:7,row:7}, {col:8,row:7}, {col:9,row:7},
+  {col:10,row:7}, {col:11,row:7}, {col:12,row:7}, {col:13,row:7}
+];
 
-  <!-- Row 7: col 1-13 (bottom) -->
-  <div class="cell" style="grid-column:1;  grid-row:7"></div>
-  <div class="cell" style="grid-column:2;  grid-row:7"></div>
-  <div class="cell" style="grid-column:3;  grid-row:7"></div>
-  <div class="cell" style="grid-column:4;  grid-row:7"></div>
-  <div class="cell" style="grid-column:5;  grid-row:7"></div>
-  <div class="cell" style="grid-column:6;  grid-row:7"></div>
-  <div class="cell" style="grid-column:7;  grid-row:7"></div>
-  <div class="cell" style="grid-column:8;  grid-row:7"></div>
-  <div class="cell" style="grid-column:9;  grid-row:7"></div>
-  <div class="cell" style="grid-column:10; grid-row:7"></div>
-  <div class="cell" style="grid-column:11; grid-row:7"></div>
-  <div class="cell" style="grid-column:12; grid-row:7"></div>
-  <div class="cell" style="grid-column:13; grid-row:7"></div>
+function buildBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
 
-</div>
+  const sCons = shuffle(CONS);
+  const sVows = shuffle(VOWS);
+
+  // 칸 배치: START(위치5), GOAL(위치6 → col:9,row:1 바로 앞)
+  // 실제 게임판 순서대로 자음/모음 배치
+  // START = col6,row1 / GOAL = col8,row1 → 고정
+  // 나머지 43칸에 자음19 + 모음16 + 특별칸(question2, mission4, 나머지2) 배치
+
+  const specialCells = [
+    {type:'start'}, {type:'goal'}
+  ];
+
+  // 칸 타입 풀 만들기
+  const pool = [];
+  sCons.forEach(c => pool.push({type:'cons', char:c}));
+  sVows.forEach(v => pool.push({type:'vowel', char:v}));
+  // 나머지 칸 (45 - 19 - 16 - 2 = 8개) → question 2개 + mission 6개
+  for (let i = 0; i < 2; i++) pool.push({type:'question'});
+  for (let i = 0; i < 6; i++) pool.push({type:'mission'});
+
+  // 셔플
+  const shuffled = shuffle(pool);
+
+  // START/GOAL 고정 위치
+  const startPos = {col:6, row:1};
+  const goalPos  = {col:8, row:1};
+
+  // 나머지 위치들
+  const otherPositions = POSITIONS.filter(p =>
+    !(p.col === startPos.col && p.row === startPos.row) &&
+    !(p.col === goalPos.col  && p.row === goalPos.row)
+  );
+
+  let idx = 0;
+
+  // 전체 포지션 렌더링
+  POSITIONS.forEach(pos => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.style.gridColumn = pos.col;
+    cell.style.gridRow    = pos.row;
+
+    if (pos.col === startPos.col && pos.row === startPos.row) {
+      cell.classList.add('start');
+      const img = document.createElement('img');
+      img.src = `${BASE}start.png`;
+      img.alt = 'START';
+      cell.appendChild(img);
+    } else if (pos.col === goalPos.col && pos.row === goalPos.row) {
+      cell.classList.add('goal');
+      const img = document.createElement('img');
+      img.src = `${BASE}goal.png`;
+      img.alt = 'GOAL';
+      cell.appendChild(img);
+    } else {
+      const data = shuffled[idx++];
+      const img = document.createElement('img');
+      if (data.type === 'cons') {
+        img.src = `${BASE}${encodeURIComponent(data.char)}.png`;
+        img.alt = data.char;
+        cell.addEventListener('click', () => openSpinner('cons', data.char));
+      } else if (data.type === 'vowel') {
+        img.src = `${BASE}${encodeURIComponent(data.char)}.png`;
+        img.alt = data.char;
+        cell.addEventListener('click', () => openSpinner('vowel', data.char));
+      } else if (data.type === 'question') {
+        img.src = `${BASE}question.png`;
+        img.alt = '?';
+        cell.addEventListener('click', () => openSpinner('question', ''));
+      } else if (data.type === 'mission') {
+        img.src = `${BASE}mission.png`;
+        img.alt = 'mission';
+      }
+      cell.appendChild(img);
+    }
+
+    board.appendChild(cell);
+  });
+}
+
+function resize() {
+  const GAP = 4;
+  const COLS = 13, ROWS = 7;
+  const maxW = window.innerWidth  - 40;
+  const maxH = window.innerHeight - 20;
+  const cellW = Math.floor((maxW - GAP*(COLS-1)) / COLS);
+  const cellH = Math.floor((maxH - GAP*(ROWS-1)) / ROWS);
+  const cell  = Math.min(cellW, cellH);
+  const board = document.getElementById('board');
+  board.style.setProperty('--cell', cell + 'px');
+  board.style.setProperty('--gap',  GAP + 'px');
+}
+
+resize();
+window.addEventListener('resize', resize);
+buildBoard();
+</script>
 </body>
 </html>
