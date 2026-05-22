@@ -422,8 +422,8 @@ function preloadImages() {
 
 function resize() {
   const GAP = 4, COLS = 13, ROWS = 7;
-  const maxW = window.innerWidth * 0.92;
-  const maxH = window.innerHeight * 0.92;
+  const maxW = window.innerWidth * 0.96;
+  const maxH = window.innerHeight * 0.96;
   const cell = Math.min(
     Math.floor((maxW - GAP*(COLS-1)) / COLS),
     Math.floor((maxH - GAP*(ROWS-1)) / ROWS)
