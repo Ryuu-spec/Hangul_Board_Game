@@ -30,27 +30,64 @@ html, body {
   justify-content: center;
   overflow: hidden;
   cursor: pointer;
+  position: relative;
 }
 .cell img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
+  object-fit: contain;
+  padding: 4px;
 }
-.cell.start, .cell.goal {
-  cursor: default;
+.cell.start img,
+.cell.goal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
+.cell.start, .cell.goal { cursor: default; border: none; }
+.cell.fixed { cursor: default; }
 </style>
 </head>
 <body>
 <div class="board" id="board"></div>
-
 <script>
 const BASE = 'https://ryuu-spec.github.io/Hangul_Board_Game/image/';
 const SPINNER_BASE = 'https://ryuu-spec.github.io/Hangul-Syllable-spinner/';
 
 const CONS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const VOWS = ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅚ','ㅛ','ㅜ','ㅝ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+
+// 고정 칸 (Genially와 동일한 위치)
+const FIXED = {
+  '6-1': 'start',
+  '8-1': 'goal',
+  '1-1': 'question',
+  '4-3': 'question',
+  '10-3': 'question',
+  '1-7': 'question',
+  '13-7': 'question',
+  '13-1': 'mission',
+  '1-3': 'mission',
+  '13-3': 'mission',
+  '4-5': 'mission',
+  '7-7': 'mission',
+};
+
+const POSITIONS = [
+  {col:1,row:1},{col:2,row:1},{col:3,row:1},{col:4,row:1},{col:5,row:1},
+  {col:6,row:1},{col:8,row:1},
+  {col:9,row:1},{col:10,row:1},{col:11,row:1},{col:12,row:1},{col:13,row:1},
+  {col:1,row:2},{col:13,row:2},
+  {col:1,row:3},{col:2,row:3},{col:3,row:3},{col:4,row:3},
+  {col:10,row:3},{col:11,row:3},{col:12,row:3},{col:13,row:3},
+  {col:4,row:4},{col:10,row:4},
+  {col:1,row:5},{col:2,row:5},{col:3,row:5},{col:4,row:5},
+  {col:10,row:5},{col:11,row:5},{col:12,row:5},{col:13,row:5},
+  {col:1,row:6},{col:13,row:6},
+  {col:1,row:7},{col:2,row:7},{col:3,row:7},{col:4,row:7},{col:5,row:7},
+  {col:6,row:7},{col:7,row:7},{col:8,row:7},{col:9,row:7},
+  {col:10,row:7},{col:11,row:7},{col:12,row:7},{col:13,row:7}
+];
 
 function shuffle(arr) {
   const a = [...arr];
@@ -62,136 +99,78 @@ function shuffle(arr) {
 }
 
 function openSpinner(type, char) {
-  if (type === 'cons') {
-    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=vowel`, '_blank', 'width=520,height=420');
-  } else if (type === 'vowel') {
-    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=consonant`, '_blank', 'width=520,height=420');
-  } else if (type === 'question') {
-    window.open(`${SPINNER_BASE}Syllable_Spinner.html`, '_blank', 'width=520,height=420');
-  }
+  if (type === 'cons')
+    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=vowel`,'_blank','width=520,height=420');
+  else if (type === 'vowel')
+    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=consonant`,'_blank','width=520,height=420');
+  else if (type === 'question')
+    window.open(`${SPINNER_BASE}Syllable_Spinner.html`,'_blank','width=520,height=420');
 }
 
-// 보드 칸 순서 (총 45칸: 자음19 + 모음16 + START1 + GOAL1 + 나머지8)
-// 순서: row1(col1-5), row2(col1,13), row3(col1-4,10-13), row4(col4,10), row5(col1-4,10-13), row6(col1,13), row7(col1-13)
-// 총 10+2+8+2+8+2+13 = 45칸
-
-const POSITIONS = [
-  // Row 1
-  {col:1,row:1}, {col:2,row:1}, {col:3,row:1}, {col:4,row:1}, {col:5,row:1},
-  {col:9,row:1}, {col:10,row:1}, {col:11,row:1}, {col:12,row:1}, {col:13,row:1},
-  // Row 2
-  {col:1,row:2}, {col:13,row:2},
-  // Row 3
-  {col:1,row:3}, {col:2,row:3}, {col:3,row:3}, {col:4,row:3},
-  {col:10,row:3}, {col:11,row:3}, {col:12,row:3}, {col:13,row:3},
-  // Row 4
-  {col:4,row:4}, {col:10,row:4},
-  // Row 5
-  {col:1,row:5}, {col:2,row:5}, {col:3,row:5}, {col:4,row:5},
-  {col:10,row:5}, {col:11,row:5}, {col:12,row:5}, {col:13,row:5},
-  // Row 6
-  {col:1,row:6}, {col:13,row:6},
-  // Row 7
-  {col:1,row:7}, {col:2,row:7}, {col:3,row:7}, {col:4,row:7}, {col:5,row:7},
-  {col:6,row:7}, {col:7,row:7}, {col:8,row:7}, {col:9,row:7},
-  {col:10,row:7}, {col:11,row:7}, {col:12,row:7}, {col:13,row:7}
-];
+function makeImg(src, alt) {
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = alt;
+  return img;
+}
 
 function buildBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
 
-  const sCons = shuffle(CONS);
-  const sVows = shuffle(VOWS);
-
-  // 칸 배치: START(위치5), GOAL(위치6 → col:9,row:1 바로 앞)
-  // 실제 게임판 순서대로 자음/모음 배치
-  // START = col6,row1 / GOAL = col8,row1 → 고정
-  // 나머지 43칸에 자음19 + 모음16 + 특별칸(question2, mission4, 나머지2) 배치
-
-  const specialCells = [
-    {type:'start'}, {type:'goal'}
-  ];
-
-  // 칸 타입 풀 만들기
-  const pool = [];
-  sCons.forEach(c => pool.push({type:'cons', char:c}));
-  sVows.forEach(v => pool.push({type:'vowel', char:v}));
-  // 나머지 칸 (45 - 19 - 16 - 2 = 8개) → question 2개 + mission 6개
-  for (let i = 0; i < 2; i++) pool.push({type:'question'});
-  for (let i = 0; i < 6; i++) pool.push({type:'mission'});
-
-  // 셔플
-  const shuffled = shuffle(pool);
-
-  // START/GOAL 고정 위치
-  const startPos = {col:6, row:1};
-  const goalPos  = {col:8, row:1};
-
-  // 나머지 위치들
-  const otherPositions = POSITIONS.filter(p =>
-    !(p.col === startPos.col && p.row === startPos.row) &&
-    !(p.col === goalPos.col  && p.row === goalPos.row)
-  );
-
+  // 랜덤 풀: 고정 칸 제외한 나머지 35칸 = 자음19 + 모음16
+  const pool = shuffle([
+    ...CONS.map(c => ({type:'cons', char:c})),
+    ...VOWS.map(v => ({type:'vowel', char:v}))
+  ]);
   let idx = 0;
 
-  // 전체 포지션 렌더링
   POSITIONS.forEach(pos => {
+    const key = `${pos.col}-${pos.row}`;
+    const fixed = FIXED[key];
     const cell = document.createElement('div');
     cell.className = 'cell';
     cell.style.gridColumn = pos.col;
-    cell.style.gridRow    = pos.row;
+    cell.style.gridRow = pos.row;
 
-    if (pos.col === startPos.col && pos.row === startPos.row) {
+    if (fixed === 'start') {
       cell.classList.add('start');
-      const img = document.createElement('img');
-      img.src = `${BASE}start.png`;
-      img.alt = 'START';
-      cell.appendChild(img);
-    } else if (pos.col === goalPos.col && pos.row === goalPos.row) {
+      cell.appendChild(makeImg(`${BASE}start.png`, 'START'));
+    } else if (fixed === 'goal') {
       cell.classList.add('goal');
-      const img = document.createElement('img');
-      img.src = `${BASE}goal.png`;
-      img.alt = 'GOAL';
-      cell.appendChild(img);
+      cell.appendChild(makeImg(`${BASE}goal.png`, 'GOAL'));
+    } else if (fixed === 'question') {
+      cell.classList.add('fixed');
+      cell.appendChild(makeImg(`${BASE}question.png`, '?'));
+      cell.addEventListener('click', () => openSpinner('question', ''));
+    } else if (fixed === 'mission') {
+      cell.classList.add('fixed');
+      cell.appendChild(makeImg(`${BASE}mission.png`, 'mission'));
     } else {
-      const data = shuffled[idx++];
-      const img = document.createElement('img');
+      const data = pool[idx++];
       if (data.type === 'cons') {
-        img.src = `${BASE}${encodeURIComponent(data.char)}.png`;
-        img.alt = data.char;
+        cell.appendChild(makeImg(`${BASE}${encodeURIComponent(data.char)}.png`, data.char));
         cell.addEventListener('click', () => openSpinner('cons', data.char));
-      } else if (data.type === 'vowel') {
-        img.src = `${BASE}${encodeURIComponent(data.char)}.png`;
-        img.alt = data.char;
+      } else {
+        cell.appendChild(makeImg(`${BASE}${encodeURIComponent(data.char)}.png`, data.char));
         cell.addEventListener('click', () => openSpinner('vowel', data.char));
-      } else if (data.type === 'question') {
-        img.src = `${BASE}question.png`;
-        img.alt = '?';
-        cell.addEventListener('click', () => openSpinner('question', ''));
-      } else if (data.type === 'mission') {
-        img.src = `${BASE}mission.png`;
-        img.alt = 'mission';
       }
-      cell.appendChild(img);
     }
-
     board.appendChild(cell);
   });
 }
 
 function resize() {
-  const GAP = 4;
-  const COLS = 13, ROWS = 7;
-  const maxW = window.innerWidth  - 40;
+  const GAP = 4, COLS = 13, ROWS = 7;
+  const maxW = window.innerWidth - 40;
   const maxH = window.innerHeight - 20;
-  const cellW = Math.floor((maxW - GAP*(COLS-1)) / COLS);
-  const cellH = Math.floor((maxH - GAP*(ROWS-1)) / ROWS);
-  const cell  = Math.min(cellW, cellH);
-  const board = document.getElementById('board');
-  board.style.setProperty('--cell', cell + 'px');
-  board.style.setProperty('--gap',  GAP + 'px');
+  const cell = Math.min(
+    Math.floor((maxW - GAP*(COLS-1)) / COLS),
+    Math.floor((maxH - GAP*(ROWS-1)) / ROWS)
+  );
+  const b = document.getElementById('board');
+  b.style.setProperty('--cell', cell + 'px');
+  b.style.setProperty('--gap', GAP + 'px');
 }
 
 resize();
