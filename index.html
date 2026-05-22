@@ -186,8 +186,7 @@ function buildBoard() {
   cp.style.gridColumn = "5 / 10";
   cp.style.gridRow = "2 / 7";
   cp.innerHTML = `
-    <div class="players">♟ <span style="color:#DAA520">♟</span> <span style="color:#228B22">♟</span> <span style="color:#00008B">♟</span> <span style="color:#8B008B">♟</span></div>
-    <img class="title" src="${BASE}title.png" alt="Hangul Board Game" style="width:80%; object-fit:contain; padding:0; margin:0;">
+    <img class="title" src="${BASE}title.png" alt="Hangul Board Game" style="width:80%; object-fit:contain; padding:0; margin:0; margin-top: calc(var(--cell) * 1.1);">
     <div class="controls" style="margin-top:2px;">
       <div class="ctrl-box"><span class="ctrl-label">Roll the die</span><button class="dice-btn" id="dice-btn" onclick="rollDice(this)"></button></div>
       <div class="ctrl-box"><span class="ctrl-label">Reset Button</span><button class="reset-btn" onclick="buildBoard()"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1 1 1.5 4.8" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polyline points="4,8 4,12 8,12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
@@ -198,6 +197,9 @@ function buildBoard() {
   // 주사위 초기 SVG 삽입
   const diceBtn = document.getElementById('dice-btn');
   if (diceBtn) diceBtn.innerHTML = getDiceSVG(6);
+
+  // 말 토큰 배치 (보드 렌더링 후 실행)
+  setTimeout(placePieces, 50);
 
   POSITIONS.forEach(pos => {
     const key = `${pos.col}-${pos.row}`;
@@ -252,6 +254,85 @@ function getDiceSVG(num) {
   </svg>`;
 }
 
+let currentCell = 80;
+let pieceEls = [];
+
+const PIECE_COLORS = ['#E8302A','#F5A623','#27AE60','#7B2D8B','#E91E8C'];
+
+function placePieces() {
+  pieceEls.forEach(p => p.remove());
+  pieceEls = [];
+
+  const board = document.getElementById('board');
+  const br = board.getBoundingClientRect();
+  const GAP = 4;
+  const sz = currentCell * 0.72;
+  const totalW = PIECE_COLORS.length * sz + (PIECE_COLORS.length - 1) * 6;
+  const startX = br.left + br.width / 2 - totalW / 2;
+  // row 2 area (top of center panel)
+  const startY = br.top + (currentCell + GAP) * 1.05;
+
+  PIECE_COLORS.forEach((color, i) => {
+    const el = document.createElement('div');
+    el.className = 'piece-token';
+    Object.assign(el.style, {
+      position: 'fixed',
+      left: (startX + i * (sz + 6)) + 'px',
+      top: startY + 'px',
+      width: sz + 'px',
+      height: sz + 'px',
+      fontSize: (sz * 0.9) + 'px',
+      color: color,
+      cursor: 'grab',
+      zIndex: '200',
+      userSelect: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      filter: 'drop-shadow(1px 3px 4px rgba(0,0,0,0.4))',
+      lineHeight: '1',
+    });
+    el.textContent = '♟';
+    makeDraggable(el);
+    document.body.appendChild(el);
+    pieceEls.push(el);
+  });
+}
+
+function makeDraggable(el) {
+  const start = (cx, cy) => {
+    const ox = parseFloat(el.style.left);
+    const oy = parseFloat(el.style.top);
+    el.style.cursor = 'grabbing';
+    el.style.zIndex = '1000';
+
+    const move = (mx, my) => {
+      el.style.left = (ox + mx - cx) + 'px';
+      el.style.top  = (oy + my - cy) + 'px';
+    };
+    const end = () => {
+      el.style.cursor = 'grab';
+      el.style.zIndex = '200';
+      document.removeEventListener('mousemove', onMM);
+      document.removeEventListener('mouseup',   onMU);
+      el.removeEventListener('touchmove', onTM);
+      el.removeEventListener('touchend',  onTE);
+    };
+    const onMM = e => move(e.clientX, e.clientY);
+    const onMU = () => end();
+    const onTM = e => { e.preventDefault(); const t=e.touches[0]; move(t.clientX,t.clientY); };
+    const onTE = () => end();
+
+    document.addEventListener('mousemove', onMM);
+    document.addEventListener('mouseup',   onMU);
+    el.addEventListener('touchmove', onTM, { passive: false });
+    el.addEventListener('touchend',  onTE);
+  };
+
+  el.addEventListener('mousedown', e => { e.preventDefault(); start(e.clientX, e.clientY); });
+  el.addEventListener('touchstart', e => { e.preventDefault(); const t=e.touches[0]; start(t.clientX,t.clientY); }, { passive: false });
+}
+
 function rollDice(btn) {
   let c = 0;
   const iv = setInterval(() => {
@@ -269,9 +350,12 @@ function resize() {
     Math.floor((maxW - GAP*(COLS-1)) / COLS),
     Math.floor((maxH - GAP*(ROWS-1)) / ROWS)
   );
+  currentCell = cell;
   const b = document.getElementById('board');
   b.style.setProperty('--cell', cell + 'px');
   b.style.setProperty('--gap', GAP + 'px');
+  // 리사이즈 시 말 위치도 재조정
+  if (pieceEls.length > 0) placePieces();
 }
 
 resize();
