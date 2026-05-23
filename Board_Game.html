@@ -15,17 +15,13 @@ html, body {
   justify-content: center;
   overflow: hidden;
 }
-.board {
-  display: grid;
-  grid-template-columns: repeat(13, var(--cell));
-  grid-template-rows: repeat(7, var(--cell));
-  gap: 0;
+#board {
+  background: white;
 }
-.cell { background: white; }
 </style>
 </head>
 <body>
-<div class="board" id="board"></div>
+<svg id="board" viewBox="-0.05 -0.05 13.1 7.1" preserveAspectRatio="xMidYMid meet"></svg>
 <script>
 const CELLS = [
   // row 1
@@ -47,31 +43,31 @@ const CELLS = [
   [1,7],[2,7],[3,7],[4,7],[5,7],[6,7],[7,7],[8,7],[9,7],[10,7],[11,7],[12,7],[13,7],
 ];
 
-const cellSet = new Set(CELLS.map(([c,r]) => `${c},${r}`));
-const has = (c, r) => cellSet.has(`${c},${r}`);
+// 각 셀의 4변을 grid line 좌표로 모으고 Set으로 중복 제거
+const edges = new Set();
+for (const [c, r] of CELLS) {
+  edges.add(`${c-1} ${r-1} ${c} ${r-1}`); // top
+  edges.add(`${c-1} ${r} ${c} ${r}`);     // bottom
+  edges.add(`${c-1} ${r-1} ${c-1} ${r}`); // left
+  edges.add(`${c} ${r-1} ${c} ${r}`);     // right
+}
+
+let d = '';
+for (const e of edges) {
+  const p = e.split(' ');
+  d += `M${p[0]} ${p[1]}L${p[2]} ${p[3]}`;
+}
 
 const board = document.getElementById('board');
-for (const [c, r] of CELLS) {
-  const div = document.createElement('div');
-  div.className = 'cell';
-  div.style.gridColumn = c;
-  div.style.gridRow = r;
-
-  // 인접 셀이 없는 방향에만 border 추가 → 모든 선이 정확히 1px
-  const b = '1.5px solid #333';
-  if (!has(c, r - 1)) div.style.borderTop    = b;
-  if (!has(c - 1, r)) div.style.borderLeft   = b;
-                       div.style.borderRight  = b;  // 항상
-                       div.style.borderBottom = b;  // 항상
-
-  board.appendChild(div);
-}
+board.innerHTML = `<path d="${d}" stroke="#333" stroke-width="2" fill="none" vector-effect="non-scaling-stroke" shape-rendering="crispEdges"/>`;
 
 function resize() {
   const maxW = window.innerWidth  - 80;
   const maxH = window.innerHeight - 100;
-  const cell  = Math.min(Math.floor(maxW / 13), Math.floor(maxH / 7));
-  board.style.setProperty('--cell', cell + 'px');
+  const w = Math.min(maxW, Math.floor(maxH * 13 / 7));
+  const h = Math.floor(w * 7 / 13);
+  board.style.width  = w + 'px';
+  board.style.height = h + 'px';
 }
 resize();
 window.addEventListener('resize', resize);
