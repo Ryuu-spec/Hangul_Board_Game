@@ -14,12 +14,12 @@
             box-sizing: border-box;
         }
 
-        /* [수정] 게임 보드판을 감싸는 전체 컨테이너 */
+        /* 전체 컨테이너를 반응형으로 감싸기 */
         .game-container {
             width: 100%;
-            max-width: 1000px; /* Genially 안에서 너무 퍼지지 않도록 최대 크기 제한 */
+            max-width: 1100px;
             margin: 0 auto;
-            position: relative;
+            position: relative; /* 말 토큰 배치 기준점 */
         }
 
         h1 {
@@ -30,7 +30,7 @@
             font-style: italic;
         }
 
-        /* [수정] 보드판: 비율 유지 및 반응형 설정 */
+        /* 보드판: 원래 스타일을 유지하되 비율 고정 */
         .board {
             display: grid;
             grid-template-columns: repeat(12, 1fr);
@@ -41,10 +41,10 @@
             border-radius: 10px;
             width: 100%;
             box-sizing: border-box;
-            aspect-ratio: 12 / 7; /* [중요] 가로 세로 칸 비율을 완벽하게 고정 */
+            aspect-ratio: 12 / 7; /* Genially 안에서 비율 유지 */
+            position: relative;
         }
 
-        /* [수정] 보드판의 각 칸 */
         .cell {
             background-color: white;
             border: 1px solid #bbb;
@@ -55,7 +55,6 @@
             align-items: center;
             position: relative;
             box-sizing: border-box;
-            overflow: hidden; /* 말이 칸 밖으로 탈출하는 것 방지 */
         }
 
         .cell img {
@@ -64,7 +63,6 @@
             object-fit: contain;
         }
 
-        /* [수정] 중앙 컨트롤 영역 (주사위, 리셋 버튼) */
         .controls {
             grid-column: 4 / 10;
             grid-row: 3 / 6;
@@ -106,19 +104,18 @@
             transform: scale(1.1);
         }
 
-        /* [수정] 대망의 말 토큰(piece) 스타일 변경 */
+        /* [핵심 수정] 말 토큰을 전체 보드판 크기에 비례하도록 설정 (% 단위) */
         .piece {
-            /* 기존 고정 크기(width: 60px) 대신, 부모 칸 크기의 70%로 설정 */
-            width: 70%; 
-            height: 70%;
+            width: 5.5%;  /* 보드판 한 칸 너비에 딱 맞는 크기 */
+            height: auto;
             position: absolute;
             z-index: 10;
             transition: all 0.5s ease;
             cursor: pointer;
-            object-fit: contain; /* 캐릭터가 찌그러지지 않고 비율 유지 */
+            object-fit: contain;
         }
 
-        /* 캐릭터 선택 창 스타일 */
+        /* 캐릭터 선택 창 */
         .character-selection {
             grid-column: 4 / 10;
             grid-row: 2 / 3;
@@ -154,6 +151,7 @@
 
     <div class="game-container">
         <div class="board" id="board">
+            
             <div class="controls">
                 <h1>Hangul Board Game</h1>
                 <div class="control-buttons">
@@ -174,7 +172,7 @@
     </div>
 
     <script>
-        // 보드판 레이아웃 배열 (좌표 데이터)
+        // 원본 배열 데이터 그대로 유지
         const boardLayout = [
             { id: 1, type: 'start', label: 'START', row: 1, col: 5 },
             { id: 2, type: 'consonant', label: 'ㅅ', row: 1, col: 4 },
@@ -193,60 +191,52 @@
             { id: 15, type: 'consonant', label: 'ㄸ', row: 6, col: 2 },
             { id: 16, type: 'consonant', label: 'ㅊ', row: 6, col: 1 },
             { id: 17, type: 'vowel', label: 'ㅓ', row: 7, col: 1 },
-            { id: 18, type: 'special', label: '물음표', row: 8, col: 1 }, // 아래쪽 라인으로 연결 시 임시 조정 가능
-            
-            // 하단 라인 (row 7 고정, col 1에서 12까지 이동)
-            { id: 19, type: 'consonant', label: 'ㅇ', row: 7, col: 2 },
-            { id: 20, type: 'vowel', label: 'ㅏ', row: 7, col: 3 },
-            { id: 21, type: 'consonant', label: 'ㄴ', row: 7, col: 4 },
-            { id: 22, type: 'vowel', label: 'ㅗ', row: 7, col: 5 },
-            { id: 23, type: 'vowel', label: 'ㅓ', row: 7, col: 6 },
-            { id: 24, type: 'special', label: '탈', row: 7, col: 7 },
-            { id: 25, type: 'consonant', label: 'ㅉ', row: 7, col: 8 },
-            { id: 26, type: 'vowel', label: 'ㅠ', row: 7, col: 9 },
-            { id: 27, type: 'vowel', label: 'ㅐ', row: 7, col: 10 },
-            { id: 28, type: 'consonant', label: 'ㅌ', row: 7, col: 11 },
-            { id: 29, type: 'consonant', label: 'ㅂ', row: 7, col: 12 },
-            { id: 30, type: 'special', label: '물음표', row: 7, col: 12 }, // 필요시 위치 조정
-            
-            // 우측 및 내부 복잡한 라인 매핑
-            { id: 31, type: 'special', label: '물음표', row: 7, col: 12 },
-            { id: 32, type: 'consonant', label: 'ㅆ', row: 6, col: 12 },
-            { id: 33, type: 'special', label: '탈', row: 5, col: 12 },
-            { id: 34, type: 'vowel', label: 'ㅑ', row: 5, col: 11 },
-            { id: 35, type: 'consonant', label: 'ㅃ', row: 5, col: 10 },
-            { id: 36, type: 'consonant', label: 'ㄷ', row: 5, col: 9 },
-            { id: 37, type: 'consonant', label: 'ㄱ', row: 4, col: 9 },
-            { id: 38, type: 'special', label: '물음표', row: 3, col: 9 },
-            { id: 39, type: 'consonant', label: 'ㄲ', row: 3, col: 10 },
-            { id: 40, type: 'consonant', label: 'ㅍ', row: 3, col: 11 },
-            { id: 41, type: 'vowel', label: 'ㅔ', row: 3, col: 12 },
-            { id: 42, type: 'consonant', label: 'ㅎ', row: 2, col: 12 },
-            { id: 43, type: 'special', label: '탈', row: 1, col: 12 },
-            { id: 44, type: 'consonant', label: 'ㄹ', row: 1, col: 11 },
-            { id: 45, type: 'consonant', label: 'ㅃ', row: 1, col: 10 },
-            { id: 46, type: 'vowel', label: 'ㅡ', row: 1, col: 9 },
-            { id: 47, type: 'vowel', label: 'ㅕ', row: 1, col: 8 },
-            { id: 48, type: 'goal', label: 'GOAL', row: 1, col: 7 }
+            { id: 18, type: 'special', label: '물음표', row: 7, col: 2 },
+            { id: 19, type: 'consonant', label: 'ㅇ', row: 7, col: 3 },
+            { id: 20, type: 'vowel', label: 'ㅏ', row: 7, col: 4 },
+            { id: 21, type: 'consonant', label: 'ㄴ', row: 7, col: 5 },
+            { id: 22, type: 'vowel', label: 'ㅗ', row: 7, col: 6 },
+            { id: 23, type: 'vowel', label: 'ㅓ', row: 7, col: 7 },
+            { id: 24, type: 'special', label: '탈', row: 7, col: 8 },
+            { id: 25, type: 'consonant', label: 'ㅉ', row: 7, col: 9 },
+            { id: 26, type: 'vowel', label: 'ㅠ', row: 7, col: 10 },
+            { id: 27, type: 'vowel', label: 'ㅐ', row: 7, col: 11 },
+            { id: 28, type: 'consonant', label: 'ㅌ', row: 7, col: 12 },
+            { id: 29, type: 'consonant', label: 'ㅂ', row: 6, col: 12 },
+            { id: 30, type: 'special', label: '물음표', row: 5, col: 12 },
+            { id: 31, type: 'consonant', label: 'ㅆ', row: 4, col: 12 },
+            { id: 32, type: 'special', label: '탈', row: 4, col: 11 },
+            { id: 33, type: 'vowel', label: 'Template', row: 4, col: 10 },
+            { id: 34, type: 'vowel', label: 'ㅑ', row: 5, col: 10 },
+            { id: 35, type: 'consonant', label: 'ㅃ', row: 6, col: 10 },
+            { id: 36, type: 'consonant', label: 'ㄷ', row: 6, col: 9 },
+            { id: 37, type: 'consonant', label: 'ㄱ', row: 5, col: 9 },
+            { id: 38, type: 'special', label: '물음표', row: 4, col: 9 },
+            { id: 39, type: 'consonant', label: 'ㄲ', row: 3, col: 9 },
+            { id: 40, type: 'consonant', label: 'ㅍ', row: 3, col: 10 },
+            { id: 41, type: 'vowel', label: 'ㅔ', row: 3, col: 11 },
+            { id: 42, type: 'consonant', label: 'ㅎ', row: 3, col: 12 },
+            { id: 43, type: 'special', label: '탈', row: 2, col: 12 },
+            { id: 44, type: 'consonant', label: 'ㄹ', row: 1, col: 12 },
+            { id: 45, type: 'consonant', label: 'ㅃ', row: 1, col: 11 },
+            { id: 46, type: 'vowel', label: 'ㅡ', row: 1, col: 10 },
+            { id: 47, type: 'vowel', label: 'ㅕ', row: 1, col: 9 },
+            { id: 48, type: 'goal', label: 'GOAL', row: 1, col: 8 }
         ];
 
-        // 깃허브 이미지 베이스 URL (수정된 Girl_1 적용 반영)
         const imgBaseUrl = "https://raw.githubusercontent.com/sunmool3/hangul/main/";
         const characterImages = [
             imgBaseUrl + "Boy_1.png",
-            imgBaseUrl + "Girl_1.png", // 오타 수정 완료!
+            imgBaseUrl + "Girl_1.png",
             imgBaseUrl + "Boy_2.png",
             imgBaseUrl + "Girl_2.png",
             imgBaseUrl + "Boy_3.png",
             imgBaseUrl + "Girl_3.png"
         ];
 
-        // 이미지 매핑 데이터
         const tileImages = {
-            'start': imgBaseUrl + 'start.png',
-            'goal': imgBaseUrl + 'goal.png',
-            '물음표': imgBaseUrl + 'question.png',
-            '탈': imgBaseUrl + 'tal.png',
+            'start': imgBaseUrl + 'start.png', 'goal': imgBaseUrl + 'goal.png',
+            '물음표': imgBaseUrl + 'question.png', '탈': imgBaseUrl + 'tal.png',
             'ㄱ': imgBaseUrl + 'g.png', 'ㄴ': imgBaseUrl + 'n.png', 'ㄷ': imgBaseUrl + 'd.png', 'ㄹ': imgBaseUrl + 'r.png',
             'ㅁ': imgBaseUrl + 'm.png', 'ㅂ': imgBaseUrl + 'b.png', 'ㅅ': imgBaseUrl + 's.png', 'ㅇ': imgBaseUrl + 'ng.png',
             'ㅈ': imgBaseUrl + 'j.png', 'ㅊ': imgBaseUrl + 'ch.png', 'ㅋ': imgBaseUrl + 'k.png', 'ㅌ': imgBaseUrl + 't.png',
@@ -254,14 +244,14 @@
             'ㅃ': imgBaseUrl + 'bb.png', 'ㅆ': imgBaseUrl + 'ss.png', 'ㅉ': imgBaseUrl + 'jj.png',
             'ㅏ': imgBaseUrl + 'a.png', 'ㅑ': imgBaseUrl + 'ya.png', 'ㅓ': imgBaseUrl + 'eo.png', 'ㅕ': imgBaseUrl + 'yeo.png',
             'ㅗ': imgBaseUrl + 'o.png', 'ㅛ': imgBaseUrl + 'yo.png', 'ㅜ': imgBaseUrl + 'u.png', 'ㅠ': imgBaseUrl + 'yu.png',
-            'ㅡ': imgBaseUrl + 'eu.png', 'ㅣ': imgBaseUrl + 'i.png', 'ㅐ': imgBaseUrl + 'ae.png', 'ㅔ': imgBaseUrl + 'e.png'
+            'ㅡ': imgBaseUrl + 'eu.png', 'ㅣ': imgBaseUrl + 'i.png', 'ㅐ': imgBaseUrl + 'ae.png', 'ㅔ': imgBaseUrl + 'e.png',
+            'Template': imgBaseUrl + 'e.png' // 원본 코드 보완
         };
 
-        let playerPositions = Array(characterImages.length).fill(1); // 모든 플레이어 1번 칸(START)에서 시작
-        let selectedPlayer = 0; // 기본 선택은 첫 번째 캐릭터
+        let playerPositions = Array(characterImages.length).fill(1);
+        let selectedPlayer = 0;
         const diceSymbols = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
 
-        // 보드판 생성 함수
         function createBoard() {
             const board = document.getElementById('board');
             
@@ -283,7 +273,6 @@
             createPieces();
         }
 
-        // 캐릭터 선택 버튼 생성
         function createCharacterSelection() {
             const selectionContainer = document.getElementById('charSelection');
             characterImages.forEach((imgSrc, index) => {
@@ -295,7 +284,6 @@
             });
         }
 
-        // [수정] 말 토큰 생성 및 배치 방식 변경
         function createPieces() {
             characterImages.forEach((imgSrc, index) => {
                 const piece = document.createElement('img');
@@ -303,12 +291,11 @@
                 piece.className = 'piece';
                 piece.id = `piece-${index}`;
                 piece.onclick = () => selectPlayer(index);
-                document.getElementById('board').appendChild(piece);
-                movePieceToCell(index, 1); // 최초에 1번(START) 칸으로 이동
+                document.getElementById('board').appendChild(piece); // 보드판 바로 아래 추가
+                movePieceToCell(index, 1);
             });
         }
 
-        // 플레이어 선택 변경
         function selectPlayer(index) {
             selectedPlayer = index;
             document.querySelectorAll('.char-btn').forEach((btn, idx) => {
@@ -316,26 +303,29 @@
             });
         }
 
-        // [수정] 말을 특정 칸으로 이동시키는 함수 (px 연산 제거, Grid에 직접 배치)
+        // [핵심 수정] 픽셀 계산 대신 보드판 그리드 비율(%)을 계산하여 이동 (반응형 완벽 지원)
         function movePieceToCell(playerIndex, tileId) {
             const piece = document.getElementById(`piece-${playerIndex}`);
             const tile = boardLayout.find(t => t.id === tileId);
             
             if (piece && tile) {
-                // 부모 그리드 안에서 배치되도록 gridRow와 gridColumn을 직접 주입합니다.
-                piece.style.gridRow = tile.row;
-                piece.style.gridColumn = tile.col;
-
-                // [수정] 한 칸에 여러 말이 겹칠 때 살짝 어긋나게 배치하여 겹쳐 보이도록 설정 (반응형 % 단위)
-                const offsetMultiplier = 8; // 간격 % 조정
-                const xOffset = (playerIndex % 3) * offsetMultiplier - offsetMultiplier;
-                const yOffset = Math.floor(playerIndex / 3) * offsetMultiplier - offsetMultiplier;
+                // 12열 7행 구조 기반 퍼센트 위치 계산
+                const leftPercent = ((tile.col - 1) / 12) * 100;
+                const topPercent = ((tile.row - 1) / 7) * 100;
                 
-                piece.style.transform = `translate(${xOffset}%, ${yOffset}%)`;
+                // 칸의 중앙 쪽으로 정렬하기 위해 미세 조정 오프셋 추가
+                piece.style.left = `${leftPercent + 1.2}%`;
+                piece.style.top = `${topPercent + 0.5}%`;
+                
+                // 여러 말이 한 칸에 모였을 때 겹치지 않게 어긋내는 효과 (반응형 % 단위)
+                const offset = 0.8; 
+                const xOffset = (playerIndex % 3) * offset - offset;
+                const yOffset = Math.floor(playerIndex / 3) * offset - offset;
+                
+                piece.style.transform = `translate(${xOffset}vw, ${yOffset}vw)`;
             }
         }
 
-        // 주사위 굴리기
         function rollDice() {
             const diceBtn = document.getElementById('diceBtn');
             diceBtn.disabled = true;
@@ -351,11 +341,10 @@
                     const finalRoll = Math.floor(Math.random() * 6) + 1;
                     diceBtn.innerText = diceSymbols[finalRoll - 1];
                     
-                    // 말 이동 로직
                     let currentPos = playerPositions[selectedPlayer];
                     let nextPos = currentPos + finalRoll;
                     
-                    if (nextPos > 48) nextPos = 48; // GOAL 칸에 고정
+                    if (nextPos > 48) nextPos = 48;
                     
                     playerPositions[selectedPlayer] = nextPos;
                     movePieceToCell(selectedPlayer, nextPos);
@@ -365,7 +354,6 @@
             }, 50);
         }
 
-        // 게임 리셋
         function resetGame() {
             playerPositions = Array(characterImages.length).fill(1);
             characterImages.forEach((_, index) => {
@@ -375,7 +363,6 @@
             selectPlayer(0);
         }
 
-        // 페이지 로드 시 보드 생성
         window.onload = createBoard;
     </script>
 </body>
