@@ -101,10 +101,116 @@ html, body {
 .reset-btn:active { transform: scale(0.93); }
 .reset-btn svg { width: 62%; height: 62%; }
 .cell.fixed { cursor: default; }
+
+/* ===== 스피너 모달 ===== */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 5000;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.modal-overlay.active { display: flex; }
+.modal-card {
+  background: #fff;
+  border-radius: 24px;
+  padding: 2rem 1.8rem 1.6rem;
+  width: 92%;
+  max-width: 460px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  position: relative;
+  animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes modalPop {
+  0% { transform: scale(0.85); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-card.consonant-mode { border: 3px solid #97C459; }
+.modal-card.vowel-mode { border: 3px solid #EF9F27; }
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.5px;
+}
+.modal-card.consonant-mode .modal-title { color: #639922; }
+.modal-card.vowel-mode .modal-title { color: #BA7517; }
+.modal-combo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 1.2rem;
+}
+.modal-char-box {
+  width: 130px; height: 130px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 84px;
+  font-weight: 900;
+  background: #f8f8f8;
+  border: 2px solid #eee;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.modal-card.consonant-mode .modal-fixed { color: #97C459; }
+.modal-card.consonant-mode .modal-spin { color: #EF9F27; }
+.modal-card.vowel-mode .modal-fixed { color: #EF9F27; }
+.modal-card.vowel-mode .modal-spin { color: #97C459; }
+.modal-spin.spinning { animation: spinFlip 0.08s ease infinite alternate; }
+.modal-spin.done { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes spinFlip {
+  0% { transform: scaleY(1); opacity: 1; }
+  100% { transform: scaleY(0.6); opacity: 0.7; }
+}
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.modal-operator {
+  font-size: 36px;
+  color: #ccc;
+  font-weight: 700;
+}
+.modal-hint {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 1.4rem;
+  line-height: 1.5;
+}
+.modal-close {
+  background: #2a2a2a;
+  color: white;
+  border: none;
+  padding: 12px 48px;
+  font-size: 16px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: transform 0.1s, background 0.2s;
+}
+.modal-close:hover { background: #444; }
+.modal-close:active { transform: scale(0.96); }
+.modal-close:disabled { opacity: 0.4; cursor: not-allowed; }
 </style>
 </head>
 <body>
 <div class="board" id="board"></div>
+
+<!-- 스피너 모달 -->
+<div class="modal-overlay" id="spinnerModal">
+  <div class="modal-card" id="modalCard">
+    <div class="modal-title" id="modalTitle">Hangul Spinner</div>
+    <div class="modal-combo" id="modalCombo"></div>
+    <p class="modal-hint" id="modalHint">Combine and read it aloud!</p>
+    <button class="modal-close" id="modalCloseBtn" onclick="closeSpinner()">CLOSE</button>
+  </div>
+</div>
 <script>
 const BASE = 'https://ryuu-spec.github.io/Hangul_Board_Game/image/';
 const SPINNER_BASE = 'https://ryuu-spec.github.io/Hangul-Syllable-spinner/';
@@ -154,13 +260,176 @@ function shuffle(arr) {
 }
 
 function openSpinner(type, char) {
-  if (type === 'cons')
-    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=vowel`,'_blank','width=520,height=420');
-  else if (type === 'vowel')
-    window.open(`${SPINNER_BASE}Vowel_Spinner.html?char=${encodeURIComponent(char)}&type=consonant`,'_blank','width=520,height=420');
-  else if (type === 'question')
-    window.open(`${SPINNER_BASE}Syllable_Spinner.html`,'_blank','width=520,height=420');
+  if (type === 'question') {
+    // ? 칸은 나중에 결정 - 일단 placeholder
+    return;
+  }
+  showSpinnerModal(type, char);
 }
+
+// ===== 유효 음절 매핑 (무의미 조합 제외) =====
+// 각 자음별 허용 모음 풀
+const VALID_VOWELS_FOR_CONS = {
+  // 쉬운 자음: 모든 모음 사용 가능
+  'ㅇ': VOWS,
+  'ㄴ': VOWS,
+  'ㅁ': VOWS,
+  'ㄱ': VOWS,
+  'ㄷ': VOWS,
+  'ㅂ': VOWS,
+  'ㅎ': VOWS,
+  'ㅅ': VOWS,
+  'ㅈ': VOWS,
+  // 중간 자음: 어려운 모음 일부 제한
+  'ㄹ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
+  'ㅋ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
+  'ㅌ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
+  'ㅍ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
+  'ㅊ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
+  // 어려운 자음: 어려운 모음 대부분 제한
+  'ㄲ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ','ㅘ'],
+  'ㄸ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅢ','ㅣ','ㅟ'],
+  'ㅃ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
+  'ㅆ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ','ㅘ'],
+  'ㅉ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅚ']
+};
+
+// 모음 칸에 도착했을 때, 해당 모음과 결합 가능한 자음 풀
+function validConsonantsForVowel(vowel) {
+  return CONS.filter(c => {
+    const pool = VALID_VOWELS_FOR_CONS[c];
+    return pool && pool.includes(vowel);
+  });
+}
+
+// ===== 스피너 모달 =====
+let modalSpinning = false;
+let modalInterval = null;
+const modalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+function playModalClick() {
+  try {
+    const o = modalAudioCtx.createOscillator(), g = modalAudioCtx.createGain();
+    o.connect(g); g.connect(modalAudioCtx.destination);
+    o.frequency.value = 600; o.type = 'square';
+    g.gain.setValueAtTime(0.06, modalAudioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, modalAudioCtx.currentTime + 0.04);
+    o.start(modalAudioCtx.currentTime); o.stop(modalAudioCtx.currentTime + 0.04);
+  } catch(e) {}
+}
+
+function playModalChime() {
+  try {
+    [523,659,784].forEach((freq,i) => {
+      const o = modalAudioCtx.createOscillator(), g = modalAudioCtx.createGain();
+      o.connect(g); g.connect(modalAudioCtx.destination);
+      o.frequency.value = freq; o.type = 'sine';
+      const t = modalAudioCtx.currentTime + i * 0.12;
+      g.gain.setValueAtTime(0.12, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      o.start(t); o.stop(t + 0.4);
+    });
+  } catch(e) {}
+}
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function showSpinnerModal(type, fixedChar) {
+  const overlay = document.getElementById('spinnerModal');
+  const card    = document.getElementById('modalCard');
+  const title   = document.getElementById('modalTitle');
+  const hint    = document.getElementById('modalHint');
+  const combo   = document.getElementById('modalCombo');
+  const closeBtn= document.getElementById('modalCloseBtn');
+
+  // type='cons' → 자음 칸 도착, 모음을 스피너로 뽑음
+  // type='vowel' → 모음 칸 도착, 자음을 스피너로 뽑음
+  let pool, modeClass, titleText, hintText, layout;
+
+  if (type === 'cons') {
+    // 해당 자음과 결합 가능한 모음 풀만 사용
+    pool = VALID_VOWELS_FOR_CONS[fixedChar] || VOWS;
+    modeClass = 'consonant-mode';
+    titleText = 'Hangul Vowel Picker';
+    hintText  = 'Combine with the consonant and read it aloud!';
+    layout = `
+      <div class="modal-char-box modal-fixed">${fixedChar}</div>
+      <div class="modal-operator">+</div>
+      <div class="modal-char-box modal-spin" id="modalSpinBox">?</div>`;
+  } else {
+    // 해당 모음과 결합 가능한 자음 풀만 사용
+    pool = validConsonantsForVowel(fixedChar);
+    if (pool.length === 0) pool = CONS; // fallback (이론상 발생 안 함)
+    modeClass = 'vowel-mode';
+    titleText = 'Hangul Consonant Picker';
+    hintText  = 'Combine with the vowel and read it aloud!';
+    layout = `
+      <div class="modal-char-box modal-spin" id="modalSpinBox">?</div>
+      <div class="modal-operator">+</div>
+      <div class="modal-char-box modal-fixed">${fixedChar}</div>`;
+  }
+
+  // 모달 셋업
+  card.className = 'modal-card ' + modeClass;
+  title.textContent = titleText;
+  hint.textContent  = hintText;
+  combo.innerHTML   = layout;
+  closeBtn.disabled = true;
+  overlay.classList.add('active');
+
+  // 자동 스피너 시작 (1~2초 후 자동 정지)
+  startModalSpin(pool);
+}
+
+function startModalSpin(pool) {
+  if (modalSpinning) return;
+  modalSpinning = true;
+
+  const spinBox = document.getElementById('modalSpinBox');
+  const closeBtn = document.getElementById('modalCloseBtn');
+
+  spinBox.className = 'modal-char-box modal-spin';
+
+  let count = 0;
+  const total = 20; // 20회 × 70ms = 약 1.4초
+  modalInterval = setInterval(() => {
+    spinBox.textContent = rand(pool);
+    spinBox.className   = 'modal-char-box modal-spin spinning';
+    playModalClick();
+    count++;
+    if (count >= total) {
+      clearInterval(modalInterval);
+      modalInterval = null;
+      // 최종 결과
+      spinBox.textContent = rand(pool);
+      spinBox.className   = 'modal-char-box modal-spin done';
+      playModalChime();
+      modalSpinning = false;
+      closeBtn.disabled = false;
+    }
+  }, 70);
+}
+
+function closeSpinner() {
+  if (modalSpinning) return; // 회전 중에는 닫기 불가
+  const overlay = document.getElementById('spinnerModal');
+  overlay.classList.remove('active');
+  if (modalInterval) {
+    clearInterval(modalInterval);
+    modalInterval = null;
+  }
+  modalSpinning = false;
+}
+
+// 오버레이 바깥 클릭으로 닫기 (회전 끝난 후만)
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('spinnerModal');
+  if (overlay) {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay && !modalSpinning) closeSpinner();
+    });
+  }
+});
 
 function makeImg(src, alt) {
   const img = document.createElement('img');
@@ -257,7 +526,14 @@ function getDiceSVG(num) {
 let currentCell = 80;
 let pieceEls = [];
 
-const PIECE_COLORS = ['#E8302A','#F5A623','#27AE60','#7B2D8B','#E91E8C'];
+const PIECE_IMAGES = [
+  `${BASE}Boy_1.png`,
+  `${BASE}Girl_1.png`,
+  `${BASE}Boy_2.png`,
+  `${BASE}Girl_2.png`,
+  `${BASE}Boy_3.png`,
+  `${BASE}Girl_3.png`,
+];
 
 function placePieces() {
   pieceEls.forEach(p => p.remove());
@@ -267,12 +543,12 @@ function placePieces() {
   const br = board.getBoundingClientRect();
   const GAP = 4;
   const sz = currentCell * 0.72;
-  const totalW = PIECE_COLORS.length * sz + (PIECE_COLORS.length - 1) * 6;
+  const totalW = PIECE_IMAGES.length * sz + (PIECE_IMAGES.length - 1) * 6;
   const startX = br.left + br.width / 2 - totalW / 2;
   // row 2 area (top of center panel)
   const startY = br.top + (currentCell + GAP) * 1.05;
 
-  PIECE_COLORS.forEach((color, i) => {
+  PIECE_IMAGES.forEach((src, i) => {
     const el = document.createElement('div');
     el.className = 'piece-token';
     Object.assign(el.style, {
@@ -281,18 +557,15 @@ function placePieces() {
       top: startY + 'px',
       width: sz + 'px',
       height: sz + 'px',
-      fontSize: (sz * 0.9) + 'px',
-      color: color,
       cursor: 'grab',
       zIndex: '200',
       userSelect: 'none',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
       filter: 'drop-shadow(1px 3px 4px rgba(0,0,0,0.4))',
-      lineHeight: '1',
     });
-    el.textContent = '♟';
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
+    el.appendChild(img);
     makeDraggable(el);
     document.body.appendChild(el);
     pieceEls.push(el);
@@ -380,7 +653,7 @@ function playClickSound() {
 
 function preloadImages() {
   const allChars = [...CONS, ...VOWS];
-  const specials = ['Start', 'Goal', 'question', 'mission', 'title'];
+  const specials = ['Start', 'Goal', 'question', 'mission', 'title', 'Boy_1', 'Boy_2', 'Boy_3', 'Girl_1', 'Girl_2', 'Girl_3'];
   const srcs = [
     ...allChars.map(c => `${BASE}${encodeURIComponent(c)}.png`),
     ...specials.map(s => `${BASE}${s}.png`)
