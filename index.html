@@ -1,369 +1,429 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>한글 보드 게임 (Hangul Board Game)</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            text-align: center;
-            background-color: #fcfcfc;
-            margin: 0;
-            padding: 10px;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangul Board Game</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.board {
+  display: grid;
+  grid-template-columns: repeat(13, var(--cell));
+  grid-template-rows: repeat(7, var(--cell));
+  gap: var(--gap);
+}
+.cell {
+  border: 2px solid #aaa;
+  border-radius: 8px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+.cell img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 4px;
+}
+.cell.start img,
+.cell.goal img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cell.start, .cell.goal { cursor: default; border: none; }
+.cell.fixed { cursor: default; }
 
-        /* 전체 컨테이너를 반응형으로 감싸기 */
-        .game-container {
-            width: 100%;
-            max-width: 1100px;
-            margin: 0 auto;
-            position: relative; /* 말 토큰 배치 기준점 */
-        }
+.center-panel {
+  grid-column: 4 / span 7;
+  grid-row: 2 / span 5;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--panel-pad);
+}
+.title-img {
+  width: 85%;
+  max-width: 320px;
+  object-fit: contain;
+}
+.char-select-bar {
+  display: flex;
+  gap: var(--char-gap);
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.char-btn {
+  width: var(--char-size);
+  height: var(--char-size);
+  border-radius: 50%;
+  border: 3px solid #eee;
+  cursor: pointer;
+  object-fit: contain;
+  background: #fdfdfd;
+  transition: all 0.2s;
+}
+.char-btn.active {
+  border-color: #4CAF50;
+  box-shadow: 0 0 10px rgba(76,175,80,0.5);
+  transform: scale(1.1);
+}
+.controls-row {
+  display: flex;
+  gap: var(--control-gap);
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+.control-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.control-label {
+  font-family: sans-serif;
+  font-size: var(--font-label);
+  font-weight: bold;
+  color: #666;
+}
+.btn-action {
+  width: var(--btn-size);
+  height: var(--btn-size);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.btn-action img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.btn-action:hover { transform: scale(1.08); }
+.btn-action:active { transform: scale(0.95); }
+.btn-action:disabled { cursor: default; opacity: 0.5; transform: none; }
 
-        h1 {
-            color: #2e7d32;
-            font-size: 2.5rem;
-            margin: 10px 0;
-            font-family: 'Georgia', serif;
-            font-style: italic;
-        }
-
-        /* 보드판: 원래 스타일을 유지하되 비율 고정 */
-        .board {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            grid-template-rows: repeat(7, 1fr);
-            gap: 2px;
-            background-color: #ccc;
-            padding: 4px;
-            border-radius: 10px;
-            width: 100%;
-            box-sizing: border-box;
-            aspect-ratio: 12 / 7; /* Genially 안에서 비율 유지 */
-            position: relative;
-        }
-
-        .cell {
-            background-color: white;
-            border: 1px solid #bbb;
-            border-radius: 8px;
-            display: flex;
-            align-content: center;
-            justify-content: center;
-            align-items: center;
-            position: relative;
-            box-sizing: border-box;
-        }
-
-        .cell img {
-            width: 90%;
-            height: 90%;
-            object-fit: contain;
-        }
-
-        .controls {
-            grid-column: 4 / 10;
-            grid-row: 3 / 6;
-            background-color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border: none;
-            z-index: 1;
-        }
-
-        .control-buttons {
-            display: flex;
-            gap: 40px;
-            margin-top: 10px;
-        }
-
-        .control-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 0.9rem;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .dice, .reset-btn {
-            font-size: 3rem;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            line-height: 1;
-            transition: transform 0.2s;
-        }
-
-        .dice:hover, .reset-btn:hover {
-            transform: scale(1.1);
-        }
-
-        /* [핵심 수정] 말 토큰을 전체 보드판 크기에 비례하도록 설정 (% 단위) */
-        .piece {
-            width: 5.5%;  /* 보드판 한 칸 너비에 딱 맞는 크기 */
-            height: auto;
-            position: absolute;
-            z-index: 10;
-            transition: all 0.5s ease;
-            cursor: pointer;
-            object-fit: contain;
-        }
-
-        /* 캐릭터 선택 창 */
-        .character-selection {
-            grid-column: 4 / 10;
-            grid-row: 2 / 3;
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-            z-index: 5;
-        }
-
-        .char-btn {
-            width: 7%;
-            aspect-ratio: 1 / 1;
-            cursor: pointer;
-            border: 2px solid transparent;
-            border-radius: 50%;
-            transition: transform 0.2s, border-color 0.2s;
-            object-fit: contain;
-        }
-
-        .char-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .char-btn.selected {
-            border-color: #2e7d32;
-            background-color: #e8f5e9;
-        }
-    </style>
+/* [여기만 핵심 수정!] 말 토큰의 크기를 고정px 대신 원래 코드의 한 칸 크기(--cell)의 80%로 설정 */
+.piece {
+  position: absolute;
+  width: calc(var(--cell) * 0.8);
+  height: calc(var(--cell) * 0.8);
+  object-fit: contain;
+  z-index: 100;
+  transition: left 0.4s ease, top 0.4s ease;
+  cursor: pointer;
+}
+</style>
 </head>
 <body>
 
-    <div class="game-container">
-        <div class="board" id="board">
-            
-            <div class="controls">
-                <h1>Hangul Board Game</h1>
-                <div class="control-buttons">
-                    <div class="control-item">
-                        <span>Roll the die</span>
-                        <button class="dice" id="diceBtn" onclick="rollDice()">⚅</button>
-                    </div>
-                    <div class="control-item">
-                        <span>Reset Button</span>
-                        <button class="reset-btn" id="resetBtn" onclick="resetGame()">🔄</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="character-selection" id="charSelection">
-                </div>
-        </div>
+<div class="board" id="board">
+  <div class="center-panel">
+    <img id="title-logo" class="title-img" alt="Title">
+    <div class="char-select-bar" id="char-bar"></div>
+    <div class="controls-row">
+      <div class="control-box">
+        <div class="control-label">Roll the die</div>
+        <button class="btn-action" id="btn-dice" onclick="roll()"><img id="img-dice" alt="Dice"></button>
+      </div>
+      <div class="control-box">
+        <div class="control-label">Reset Button</div>
+        <button class="btn-action" id="btn-reset" onclick="resetGame()"><img id="img-reset" alt="Reset"></button>
+      </div>
     </div>
+  </div>
+</div>
 
-    <script>
-        // 원본 배열 데이터 그대로 유지
-        const boardLayout = [
-            { id: 1, type: 'start', label: 'START', row: 1, col: 5 },
-            { id: 2, type: 'consonant', label: 'ㅅ', row: 1, col: 4 },
-            { id: 3, type: 'consonant', label: 'ㅁ', row: 1, col: 3 },
-            { id: 4, type: 'vowel', label: 'ㅕ', row: 1, col: 2 },
-            { id: 5, type: 'consonant', label: 'ㄲ', row: 1, col: 1 },
-            { id: 6, type: 'special', label: '물음표', row: 2, col: 1 },
-            { id: 7, type: 'vowel', label: 'ㅣ', row: 3, col: 1 },
-            { id: 8, type: 'special', label: '탈', row: 4, col: 1 },
-            { id: 9, type: 'consonant', label: 'ㅋ', row: 4, col: 2 },
-            { id: 10, type: 'consonant', label: 'ㅈ', row: 4, col: 3 },
-            { id: 11, type: 'special', label: '물음표', row: 4, col: 4 },
-            { id: 12, type: 'vowel', label: 'ㅕ', row: 5, col: 4 },
-            { id: 13, type: 'special', label: '탈', row: 6, col: 4 },
-            { id: 14, type: 'consonant', label: 'ㅌ', row: 6, col: 3 },
-            { id: 15, type: 'consonant', label: 'ㄸ', row: 6, col: 2 },
-            { id: 16, type: 'consonant', label: 'ㅊ', row: 6, col: 1 },
-            { id: 17, type: 'vowel', label: 'ㅓ', row: 7, col: 1 },
-            { id: 18, type: 'special', label: '물음표', row: 7, col: 2 },
-            { id: 19, type: 'consonant', label: 'ㅇ', row: 7, col: 3 },
-            { id: 20, type: 'vowel', label: 'ㅏ', row: 7, col: 4 },
-            { id: 21, type: 'consonant', label: 'ㄴ', row: 7, col: 5 },
-            { id: 22, type: 'vowel', label: 'ㅗ', row: 7, col: 6 },
-            { id: 23, type: 'vowel', label: 'ㅓ', row: 7, col: 7 },
-            { id: 24, type: 'special', label: '탈', row: 7, col: 8 },
-            { id: 25, type: 'consonant', label: 'ㅉ', row: 7, col: 9 },
-            { id: 26, type: 'vowel', label: 'ㅠ', row: 7, col: 10 },
-            { id: 27, type: 'vowel', label: 'ㅐ', row: 7, col: 11 },
-            { id: 28, type: 'consonant', label: 'ㅌ', row: 7, col: 12 },
-            { id: 29, type: 'consonant', label: 'ㅂ', row: 6, col: 12 },
-            { id: 30, type: 'special', label: '물음표', row: 5, col: 12 },
-            { id: 31, type: 'consonant', label: 'ㅆ', row: 4, col: 12 },
-            { id: 32, type: 'special', label: '탈', row: 4, col: 11 },
-            { id: 33, type: 'vowel', label: 'Template', row: 4, col: 10 },
-            { id: 34, type: 'vowel', label: 'ㅑ', row: 5, col: 10 },
-            { id: 35, type: 'consonant', label: 'ㅃ', row: 6, col: 10 },
-            { id: 36, type: 'consonant', label: 'ㄷ', row: 6, col: 9 },
-            { id: 37, type: 'consonant', label: 'ㄱ', row: 5, col: 9 },
-            { id: 38, type: 'special', label: '물음표', row: 4, col: 9 },
-            { id: 39, type: 'consonant', label: 'ㄲ', row: 3, col: 9 },
-            { id: 40, type: 'consonant', label: 'ㅍ', row: 3, col: 10 },
-            { id: 41, type: 'vowel', label: 'ㅔ', row: 3, col: 11 },
-            { id: 42, type: 'consonant', label: 'ㅎ', row: 3, col: 12 },
-            { id: 43, type: 'special', label: '탈', row: 2, col: 12 },
-            { id: 44, type: 'consonant', label: 'ㄹ', row: 1, col: 12 },
-            { id: 45, type: 'consonant', label: 'ㅃ', row: 1, col: 11 },
-            { id: 46, type: 'vowel', label: 'ㅡ', row: 1, col: 10 },
-            { id: 47, type: 'vowel', label: 'ㅕ', row: 1, col: 9 },
-            { id: 48, type: 'goal', label: 'GOAL', row: 1, col: 8 }
-        ];
+<script>
+const BASE = "https://raw.githubusercontent.com/sunmool3/hangul/main/";
 
-        const imgBaseUrl = "https://raw.githubusercontent.com/sunmool3/hangul/main/";
-        const characterImages = [
-            imgBaseUrl + "Boy_1.png",
-            imgBaseUrl + "Girl_1.png",
-            imgBaseUrl + "Boy_2.png",
-            imgBaseUrl + "Girl_2.png",
-            imgBaseUrl + "Boy_3.png",
-            imgBaseUrl + "Girl_3.png"
-        ];
+const CHARS = [
+  BASE+"Boy_1.png",
+  BASE+"Girl_1.png",
+  BASE+"Boy_2.png",
+  BASE+"Girl_2.png",
+  BASE+"Boy_3.png",
+  BASE+"Girl_3.png"
+];
 
-        const tileImages = {
-            'start': imgBaseUrl + 'start.png', 'goal': imgBaseUrl + 'goal.png',
-            '물음표': imgBaseUrl + 'question.png', '탈': imgBaseUrl + 'tal.png',
-            'ㄱ': imgBaseUrl + 'g.png', 'ㄴ': imgBaseUrl + 'n.png', 'ㄷ': imgBaseUrl + 'd.png', 'ㄹ': imgBaseUrl + 'r.png',
-            'ㅁ': imgBaseUrl + 'm.png', 'ㅂ': imgBaseUrl + 'b.png', 'ㅅ': imgBaseUrl + 's.png', 'ㅇ': imgBaseUrl + 'ng.png',
-            'ㅈ': imgBaseUrl + 'j.png', 'ㅊ': imgBaseUrl + 'ch.png', 'ㅋ': imgBaseUrl + 'k.png', 'ㅌ': imgBaseUrl + 't.png',
-            'ㅍ': imgBaseUrl + 'p.png', 'ㅎ': imgBaseUrl + 'h.png', 'ㄲ': imgBaseUrl + 'gg.png', 'ㄸ': imgBaseUrl + 'dd.png',
-            'ㅃ': imgBaseUrl + 'bb.png', 'ㅆ': imgBaseUrl + 'ss.png', 'ㅉ': imgBaseUrl + 'jj.png',
-            'ㅏ': imgBaseUrl + 'a.png', 'ㅑ': imgBaseUrl + 'ya.png', 'ㅓ': imgBaseUrl + 'eo.png', 'ㅕ': imgBaseUrl + 'yeo.png',
-            'ㅗ': imgBaseUrl + 'o.png', 'ㅛ': imgBaseUrl + 'yo.png', 'ㅜ': imgBaseUrl + 'u.png', 'ㅠ': imgBaseUrl + 'yu.png',
-            'ㅡ': imgBaseUrl + 'eu.png', 'ㅣ': imgBaseUrl + 'i.png', 'ㅐ': imgBaseUrl + 'ae.png', 'ㅔ': imgBaseUrl + 'e.png',
-            'Template': imgBaseUrl + 'e.png' // 원본 코드 보완
-        };
+const DICE_IMGS = [
+  BASE+"dice1.png",
+  BASE+"dice2.png",
+  BASE+"dice3.png",
+  BASE+"dice4.png",
+  BASE+"dice5.png",
+  BASE+"dice6.png"
+];
 
-        let playerPositions = Array(characterImages.length).fill(1);
-        let selectedPlayer = 0;
-        const diceSymbols = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+const MAP_DATA = [
+  { id:1,  type:"start",    val:"start.png", r:1, c:5 },
+  { id:2,  type:"tile",     val:"s.png",     r:1, c:4 },
+  { id:3,  type:"tile",     val:"m.png",     r:1, c:3 },
+  { id:4,  type:"tile",     val:"yeo.png",   r:1, c:2 },
+  { id:5,  type:"tile",     val:"gg.png",    r:1, c:1 },
+  { id:6,  type:"tile",     val:"question.png", r:2, c:1 },
+  { id:7,  type:"tile",     val:"i.png",     r:3, c:1 },
+  { id:8,  type:"tile",     val:"tal.png",   r:4, c:1 },
+  { id:9,  type:"tile",     val:"k.png",     r:4, c:2 },
+  { id:10, type:"tile",     val:"j.png",     r:4, c:3 },
+  { id:11, type:"tile",     val:"question.png", r:4, c:4 },
+  { id:12, type:"tile",     val:"yeo.png",   r:5, c:4 },
+  { id:13, type:"tile",     val:"tal.png",   r:6, c:4 },
+  { id:14, type:"tile",     val:"t.png",     r:6, c:3 },
+  { id:15, type:"tile",     val:"dd.png",    r:6, c:2 },
+  { id:16, type:"tile",     val:"ch.png",    r:6, c:1 },
+  { id:17, type:"tile",     val:"eo.png",    r:7, c:1 },
+  { id:18, type:"tile",     val:"question.png", r:7, c:2 },
+  { id:19, type:"tile",     val:"ng.png",    r:7, c:3 },
+  { id:20, type:"tile",     val:"a.png",     r:7, c:4 },
+  { id:21, type:"tile",     val:"n.png",     r:7, c:5 },
+  { id:22, type:"tile",     val:"o.png",     r:7, c:6 },
+  { id:23, type:"tile",     val:"eo.png",    r:7, c:7 },
+  { id:24, type:"tile",     val:"tal.png",   r:7, c:8 },
+  { id:25, type:"tile",     val:"jj.png",    r:7, c:9 },
+  { id:26, type:"tile",     val:"yu.png",    r:7, c:10 },
+  { id:27, type:"tile",     val:"ae.png",    r:7, c:11 },
+  { id:28, type:"tile",     val:"t.png",     r:7, c:12 },
+  { id:29, type:"tile",     val:"b.png",     r:6, c:12 },
+  { id:30, type:"tile",     val:"question.png", r:5, c:12 },
+  { id:31, type:"tile",     val:"ss.png",    r:4, c:12 },
+  { id:32, type:"tile",     val:"tal.png",   r:4, c:11 },
+  { id:33, type:"tile",     val:"e.png",     r:4, c:10 },
+  { id:34, type:"tile",     val:"ya.png",    r:5, c:10 },
+  { id:35, type:"tile",     val:"bb.png",    r:6, c:10 },
+  { id:36, type:"tile",     val:"d.png",     r:6, c:9 },
+  { id:37, type:"tile",     val:"g.png",     r:5, c:9 },
+  { id:38, type:"tile",     val:"question.png", r:4, c:9 },
+  { id:39, type:"tile",     val:"gg.png",    r:3, c:9 },
+  { id:40, type:"tile",     val:"p.png",     r:3, c:10 },
+  { id:41, type:"tile",     val:"e.png",     r:3, c:11 },
+  { id:42, type:"tile",     val:"h.png",     r:3, c:12 },
+  { id:43, type:"tile",     val:"tal.png",   r:2, c:12 },
+  { id:44, type:"tile",     val:"r.png",     r:1, c:12 },
+  { id:45, type:"tile",     val:"bb.png",    r:1, c:11 },
+  { id:46, type:"tile",     val:"eu.png",    r:1, c:10 },
+  { id:47, type:"tile",     val:"yeo.png",   r:1, c:9 },
+  { id:48, type:"goal",     val:"goal.png",  r:1, c:8 }
+];
 
-        function createBoard() {
-            const board = document.getElementById('board');
-            
-            boardLayout.forEach(tile => {
-                const cell = document.createElement('div');
-                cell.className = `cell ${tile.type}`;
-                cell.style.gridRow = tile.row;
-                cell.style.gridColumn = tile.col;
-                cell.id = `cell-${tile.id}`;
+let playerPos = [1,1,1,1,1,1];
+let activeIdx = 0;
+let isRolling = false;
 
-                const img = document.createElement('img');
-                img.src = tileImages[tile.label] || tileImages[tile.type] || '';
-                img.alt = tile.label;
-                cell.appendChild(img);
-                board.appendChild(cell);
-            });
+const cellsMap = {};
 
-            createCharacterSelection();
-            createPieces();
-        }
+function preload(srcs) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position:fixed; top:0; left:0; width:100vw; height:100vh; background:white;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:15px; z-index:9999;
+    font-family:sans-serif;
+  `;
+  overlay.innerHTML = `
+    <img src="${BASE}title.png" style="width:280px; object-fit:contain;">
+    <div style="color:#555; font-size:15px; font-weight:600;">Loading...</div>
+    <div style="width:240px; height:8px; background:#eee; border-radius:8px; overflow:hidden;">
+      <div id=\"load-bar\" style="height:100%; width:0%; background:linear-gradient(90deg,#8BC34A,#4CAF50); border-radius:8px; transition:width 0.2s;"></div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
 
-        function createCharacterSelection() {
-            const selectionContainer = document.getElementById('charSelection');
-            characterImages.forEach((imgSrc, index) => {
-                const img = document.createElement('img');
-                img.src = imgSrc;
-                img.className = `char-btn ${index === 0 ? 'selected' : ''}`;
-                img.onclick = () => selectPlayer(index);
-                selectionContainer.appendChild(img);
-            });
-        }
+  let loaded = 0;
+  const bar = document.getElementById('load-bar');
 
-        function createPieces() {
-            characterImages.forEach((imgSrc, index) => {
-                const piece = document.createElement('img');
-                piece.src = imgSrc;
-                piece.className = 'piece';
-                piece.id = `piece-${index}`;
-                piece.onclick = () => selectPlayer(index);
-                document.getElementById('board').appendChild(piece); // 보드판 바로 아래 추가
-                movePieceToCell(index, 1);
-            });
-        }
+  return Promise.all(srcs.map(src => new Promise(resolve => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+      loaded++;
+      if (bar) bar.style.width = (loaded / srcs.length * 100) + '%';
+      resolve();
+    };
+    img.src = src;
+  }))).then(() => {
+    setTimeout(() => overlay.remove(), 200);
+  });
+}
 
-        function selectPlayer(index) {
-            selectedPlayer = index;
-            document.querySelectorAll('.char-btn').forEach((btn, idx) => {
-                btn.classList.toggle('selected', idx === index);
-            });
-        }
+function resize() {
+  const GAP = 4, COLS = 13, ROWS = 7;
+  const maxW = window.innerWidth * 0.96;
+  const maxH = window.innerHeight * 0.96;
+  
+  let cell = Math.floor((maxW - (COLS - 1) * GAP) / COLS);
+  if (cell * ROWS + (ROWS - 1) * GAP > maxH) {
+    cell = Math.floor((maxH - (ROWS - 1) * GAP) / ROWS);
+  }
+  if (cell < 20) cell = 20;
 
-        // [핵심 수정] 픽셀 계산 대신 보드판 그리드 비율(%)을 계산하여 이동 (반응형 완벽 지원)
-        function movePieceToCell(playerIndex, tileId) {
-            const piece = document.getElementById(`piece-${playerIndex}`);
-            const tile = boardLayout.find(t => t.id === tileId);
-            
-            if (piece && tile) {
-                // 12열 7행 구조 기반 퍼센트 위치 계산
-                const leftPercent = ((tile.col - 1) / 12) * 100;
-                const topPercent = ((tile.row - 1) / 7) * 100;
-                
-                // 칸의 중앙 쪽으로 정렬하기 위해 미세 조정 오프셋 추가
-                piece.style.left = `${leftPercent + 1.2}%`;
-                piece.style.top = `${topPercent + 0.5}%`;
-                
-                // 여러 말이 한 칸에 모였을 때 겹치지 않게 어긋내는 효과 (반응형 % 단위)
-                const offset = 0.8; 
-                const xOffset = (playerIndex % 3) * offset - offset;
-                const yOffset = Math.floor(playerIndex / 3) * offset - offset;
-                
-                piece.style.transform = `translate(${xOffset}vw, ${yOffset}vw)`;
-            }
-        }
+  const root = document.documentElement;
+  root.style.setProperty('--cell', cell + 'px');
+  root.style.setProperty('--gap', GAP + 'px');
+  root.style.setProperty('--panel-pad', Math.max(6, Math.floor(cell*0.2)) + 'px');
+  root.style.setProperty('--char-size', Math.floor(cell*0.75) + 'px');
+  root.style.setProperty('--char-gap', Math.max(4, Math.floor(cell*0.12)) + 'px');
+  root.style.setProperty('--btn-size', Math.floor(cell*0.95) + 'px');
+  root.style.setProperty('--control-gap', Math.floor(cell*0.8) + 'px');
+  root.style.setProperty('--font-label', Math.max(10, Math.floor(cell*0.22)) + 'px');
 
-        function rollDice() {
-            const diceBtn = document.getElementById('diceBtn');
-            diceBtn.disabled = true;
-            
-            let count = 0;
-            const interval = setInterval(() => {
-                const randomRoll = Math.floor(Math.random() * 6) + 1;
-                diceBtn.innerText = diceSymbols[randomRoll - 1];
-                count++;
-                
-                if (count > 10) {
-                    clearInterval(interval);
-                    const finalRoll = Math.floor(Math.random() * 6) + 1;
-                    diceBtn.innerText = diceSymbols[finalRoll - 1];
-                    
-                    let currentPos = playerPositions[selectedPlayer];
-                    let nextPos = currentPos + finalRoll;
-                    
-                    if (nextPos > 48) nextPos = 48;
-                    
-                    playerPositions[selectedPlayer] = nextPos;
-                    movePieceToCell(selectedPlayer, nextPos);
-                    
-                    diceBtn.disabled = false;
-                }
-            }, 50);
-        }
+  updateAllPieces();
+}
 
-        function resetGame() {
-            playerPositions = Array(characterImages.length).fill(1);
-            characterImages.forEach((_, index) => {
-                movePieceToCell(index, 1);
-            });
-            document.getElementById('diceBtn').innerText = '⚅';
-            selectPlayer(0);
-        }
+function initGame() {
+  document.getElementById('title-logo').src = BASE+"title.png";
+  document.getElementById('img-dice').src = BASE+"dice1.png";
+  document.getElementById('img-reset').src = BASE+"reset.png";
 
-        window.onload = createBoard;
-    </script>
+  const board = document.getElementById('board');
+  MAP_DATA.forEach(d => {
+    const div = document.createElement('div');
+    div.className = `cell ${d.type}`;
+    if(d.type==='fixed') div.classList.add('fixed');
+    div.style.gridRow = d.r;
+    div.style.gridColumn = d.c;
+
+    if(d.val) {
+      const img = document.createElement('img');
+      img.src = BASE + d.val;
+      div.appendChild(img);
+    }
+    board.appendChild(div);
+    cellsMap[d.id] = div;
+  });
+
+  const bar = document.getElementById('char-bar');
+  CHARS.forEach((src, idx) => {
+    const img = document.createElement('img');
+    img.className = `char-btn ${idx === 0 ? 'active' : ''}`;
+    img.src = src;
+    img.onclick = () => {
+      if(isRolling) return;
+      activeIdx = idx;
+      document.querySelectorAll('.char-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+      });
+    };
+    bar.appendChild(img);
+  });
+
+  CHARS.forEach((src, idx) => {
+    const img = document.createElement('img');
+    img.className = 'piece';
+    img.id = `piece-${idx}`;
+    img.src = src;
+    img.onclick = () => {
+      if(isRolling) return;
+      activeIdx = idx;
+      document.querySelectorAll('.char-btn').forEach((b, i) => {
+        b.classList.toggle('active', i === idx);
+      });
+    };
+    document.body.appendChild(img);
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+}
+
+// [핵심 변경] 원본의 고정 px 계산식(30, 40) 대신, 유동적인 --cell 값을 추적해 완벽히 중앙 정렬
+function updateAllPieces() {
+  const cellStyle = getComputedStyle(document.documentElement);
+  const cellSize = parseFloat(cellStyle.getPropertyValue('--cell')) || 50;
+
+  for(let i=0; i<6; i++) {
+    const p = document.getElementById(`piece-${i}`);
+    if(!p) continue;
+    const cid = playerPos[i];
+    const cellEl = cellsMap[cid];
+    if(cellEl) {
+      const rect = cellEl.getBoundingClientRect();
+      
+      // 말의 크기가 cellSize * 0.8 이므로, 남은 여백(0.2)의 절반만큼 이동해 정중앙 배치
+      const offset = cellSize * 0.1; 
+      
+      // 겹치기 효과 오프셋
+      const ox = (i % 3) * 4 - 4;
+      const oy = Math.floor(i / 3) * 4 - 4;
+
+      p.style.left = (window.scrollX + rect.left + offset + ox) + 'px';
+      p.style.top = (window.scrollY + rect.top + offset + oy) + 'px';
+    }
+  }
+}
+
+function roll() {
+  if(isRolling) return;
+  isRolling = true;
+  document.getElementById('btn-dice').disabled = true;
+  document.getElementById('btn-reset').disabled = true;
+
+  let count = 0;
+  const imgDice = document.getElementById('img-dice');
+  
+  const timer = setInterval(() => {
+    const rand = Math.floor(Math.random() * 6);
+    imgDice.src = DICE_IMGS[rand];
+    count++;
+    if(count > 8) {
+      clearInterval(timer);
+      const finalRoll = Math.floor(Math.random() * 6) + 1;
+      imgDice.src = DICE_IMGS[finalRoll - 1];
+
+      let cur = playerPos[activeIdx];
+      let nxt = cur + finalRoll;
+      if(nxt > 48) nxt = 48;
+
+      playerPos[activeIdx] = nxt;
+      updateAllPieces();
+
+      isRolling = false;
+      document.getElementById('btn-dice').disabled = false;
+      document.getElementById('btn-reset').disabled = false;
+    }
+  }, 80);
+}
+
+function resetGame() {
+  if(isRolling) return;
+  playerPos = [1,1,1,1,1,1];
+  updateAllPieces();
+  document.getElementById('img-dice').src = DICE_IMGS[0];
+}
+
+const allAssets = [
+  BASE+"title.png", BASE+"reset.png",
+  BASE+"start.png", BASE+"goal.png", BASE+"question.png", BASE+"tal.png",
+  BASE+"s.png", BASE+"m.png", BASE+"yeo.png", BASE+"gg.png", BASE+"i.png",
+  BASE+"k.png", BASE+"j.png", BASE+"t.png", BASE+"dd.png", BASE+"ch.png",
+  BASE+"eo.png", BASE+"ng.png", BASE+"a.png", BASE+"n.png", BASE+"o.png",
+  BASE+"jj.png", BASE+"yu.png", BASE+"ae.png", BASE+"b.png", BASE+"ss.png",
+  BASE+"e.png", BASE+"ya.png", BASE+"bb.png", BASE+"d.png", BASE+"g.png",
+  BASE+"p.png", BASE+"h.png", BASE+"r.png", BASE+"eu.png",
+  ...CHARS, ...DICE_IMGS
+];
+
+preload(allAssets).then(() => {
+  initGame();
+});
+</script>
 </body>
 </html>
