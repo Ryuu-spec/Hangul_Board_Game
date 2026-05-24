@@ -311,4 +311,72 @@
         // 플레이어 선택 변경
         function selectPlayer(index) {
             selectedPlayer = index;
-            document.querySelectorAll('.char-btn').forEach((btn
+            document.querySelectorAll('.char-btn').forEach((btn, idx) => {
+                btn.classList.toggle('selected', idx === index);
+            });
+        }
+
+        // [수정] 말을 특정 칸으로 이동시키는 함수 (px 연산 제거, Grid에 직접 배치)
+        function movePieceToCell(playerIndex, tileId) {
+            const piece = document.getElementById(`piece-${playerIndex}`);
+            const tile = boardLayout.find(t => t.id === tileId);
+            
+            if (piece && tile) {
+                // 부모 그리드 안에서 배치되도록 gridRow와 gridColumn을 직접 주입합니다.
+                piece.style.gridRow = tile.row;
+                piece.style.gridColumn = tile.col;
+
+                // [수정] 한 칸에 여러 말이 겹칠 때 살짝 어긋나게 배치하여 겹쳐 보이도록 설정 (반응형 % 단위)
+                const offsetMultiplier = 8; // 간격 % 조정
+                const xOffset = (playerIndex % 3) * offsetMultiplier - offsetMultiplier;
+                const yOffset = Math.floor(playerIndex / 3) * offsetMultiplier - offsetMultiplier;
+                
+                piece.style.transform = `translate(${xOffset}%, ${yOffset}%)`;
+            }
+        }
+
+        // 주사위 굴리기
+        function rollDice() {
+            const diceBtn = document.getElementById('diceBtn');
+            diceBtn.disabled = true;
+            
+            let count = 0;
+            const interval = setInterval(() => {
+                const randomRoll = Math.floor(Math.random() * 6) + 1;
+                diceBtn.innerText = diceSymbols[randomRoll - 1];
+                count++;
+                
+                if (count > 10) {
+                    clearInterval(interval);
+                    const finalRoll = Math.floor(Math.random() * 6) + 1;
+                    diceBtn.innerText = diceSymbols[finalRoll - 1];
+                    
+                    // 말 이동 로직
+                    let currentPos = playerPositions[selectedPlayer];
+                    let nextPos = currentPos + finalRoll;
+                    
+                    if (nextPos > 48) nextPos = 48; // GOAL 칸에 고정
+                    
+                    playerPositions[selectedPlayer] = nextPos;
+                    movePieceToCell(selectedPlayer, nextPos);
+                    
+                    diceBtn.disabled = false;
+                }
+            }, 50);
+        }
+
+        // 게임 리셋
+        function resetGame() {
+            playerPositions = Array(characterImages.length).fill(1);
+            characterImages.forEach((_, index) => {
+                movePieceToCell(index, 1);
+            });
+            document.getElementById('diceBtn').innerText = '⚅';
+            selectPlayer(0);
+        }
+
+        // 페이지 로드 시 보드 생성
+        window.onload = createBoard;
+    </script>
+</body>
+</html>
