@@ -269,39 +269,89 @@ function openSpinner(type, char) {
 }
 
 // ===== 유효 음절 매핑 (무의미 조합 제외) =====
-// 각 자음별 허용 모음 풀
-const VALID_VOWELS_FOR_CONS = {
-  // 쉬운 자음: 모든 모음 사용 가능
-  'ㅇ': VOWS,
-  'ㄴ': VOWS,
-  'ㅁ': VOWS,
-  'ㄱ': VOWS,
-  'ㄷ': VOWS,
-  'ㅂ': VOWS,
-  'ㅎ': VOWS,
-  'ㅅ': VOWS,
-  'ㅈ': VOWS,
-  // 중간 자음: 어려운 모음 일부 제한
-  'ㄹ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
-  'ㅋ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
-  'ㅌ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
-  'ㅍ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
-  'ㅊ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ'],
-  // 어려운 자음: 어려운 모음 대부분 제한
-  'ㄲ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ','ㅘ'],
-  'ㄸ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅢ','ㅣ','ㅟ'],
-  'ㅃ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'],
-  'ㅆ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅟ','ㅚ','ㅘ'],
-  'ㅉ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ','ㅚ']
+// 쉬운/중간 모음 (11개) — 모든 자음과 결합 가능 (ㅃ 포함)
+const EASY_MID_VOWS = ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ'];
+
+// 각 자음별 추가로 허용되는 어려운 모음 (ㅡ ㅢ ㅟ ㅚ ㅝ ㅘ 중에서만)
+const EXTRA_HARD_VOWS = {
+  // ── 쉬운 자음 ─────────────────────────────
+  'ㅇ': ['ㅡ','ㅢ','ㅟ','ㅚ','ㅝ','ㅘ'], // 으 의 위 외 워 와
+  'ㄴ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 느 뉘 뇌 놔
+  'ㅁ': ['ㅡ','ㅚ','ㅝ'],                // 므 뫼📖 뭐
+  'ㄱ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 그 귀 괴 과
+  'ㄷ': ['ㅡ','ㅟ','ㅚ','ㅝ'],           // 드 뒤 되 둬
+  'ㅂ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 브 뷔🌍 뵈 봐
+  'ㅎ': ['ㅡ','ㅢ','ㅟ','ㅚ','ㅘ'],      // 흐 희 휘 회 화
+  'ㅅ': ['ㅡ','ㅟ','ㅚ'],                // 스 쉬 쇠
+  'ㅈ': ['ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],      // 즈 쥐 죄 줘 좌
+  // ── 중간 자음 ─────────────────────────────
+  'ㄹ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 르 뤼🌍 뢰🌍 롸💬
+  'ㅋ': ['ㅡ','ㅟ','ㅝ','ㅘ'],           // 크 퀴 쿼🌍 콰🌍
+  'ㅌ': ['ㅡ','ㅢ','ㅟ','ㅚ'],           // 트 틔 튀 퇴
+  'ㅍ': ['ㅡ'],                          // 프 (어려운 모음 중 ㅡ만)
+  'ㅊ': ['ㅡ','ㅟ','ㅚ','ㅝ'],           // 츠 취 최 춰🌍
+  // ── 어려운 자음(된소리) ──────────────────
+  'ㄲ': ['ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],      // 끄 뀌 꾀 꿔🌍 꽈
+  'ㄸ': ['ㅡ','ㅢ','ㅟ'],                // 뜨 띄 뛰
+  'ㅃ': ['ㅡ'],                          // 쁘 (예쁘다 기쁘다 바쁘다 나쁘다)
+  'ㅆ': ['ㅡ','ㅚ','ㅘ'],                // 쓰 쐬 쏴
+  'ㅉ': ['ㅡ','ㅚ']                      // 쯔 쬐
 };
+
+// 각 자음별 최종 허용 모음 풀 = 쉬운/중간 모음 + 자음별 어려운 모음
+const VALID_VOWELS_FOR_CONS = Object.fromEntries(
+  CONS.map(c => [c, [...EASY_MID_VOWS, ...EXTRA_HARD_VOWS[c]]])
+);
 
 // 모음 칸에 도착했을 때, 해당 모음과 결합 가능한 자음 풀
 function validConsonantsForVowel(vowel) {
-  return CONS.filter(c => {
-    const pool = VALID_VOWELS_FOR_CONS[c];
-    return pool && pool.includes(vowel);
-  });
+  return CONS.filter(c => VALID_VOWELS_FOR_CONS[c].includes(vowel));
 }
+
+// 특수 음절 (외래어/구어체/고유어) — 나중에 팝업 힌트용
+const SPECIAL_SYLLABLES = {
+  '뤼':'🌍','뢰':'🌍','쿼':'🌍','콰':'🌍','뷔':'🌍','춰':'🌍','꿔':'🌍',
+  '롸':'💬',
+  '뫼':'📖'
+};
+
+// ===== 난이도 곡선 (보드 배치용) =====
+// 자음 19개 — 쉬운 9 / 중간 5 / 어려운 5
+const EASY_CONS = ['ㅇ','ㄴ','ㅁ','ㄱ','ㄷ','ㅂ','ㅎ','ㅅ','ㅈ'];
+const MID_CONS  = ['ㄹ','ㅋ','ㅌ','ㅍ','ㅊ'];
+const HARD_CONS = ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
+
+// 모음 16개 (보드 표시용) — 쉬운 5 / 중간 6 / 어려운 5
+const EASY_VOWS_BOARD = ['ㅏ','ㅗ','ㅜ','ㅣ','ㅑ'];
+const MID_VOWS_BOARD  = ['ㅓ','ㅕ','ㅛ','ㅠ','ㅔ','ㅐ'];
+const HARD_VOWS_BOARD = ['ㅡ','ㅢ','ㅟ','ㅚ','ㅝ'];
+
+// 게임 진행 순서 (반시계방향: START 왼쪽 → 아래 → 오른쪽 → 위 → GOAL)
+// 자모 칸 35개만 (고정 칸 제외)
+//   초반 1~14  : 쉬운 자음 9 + 쉬운 모음 5  = 14
+//   중반 15~25 : 중간 자음 5 + 중간 모음 6 = 11
+//   후반 26~35 : 어려운 자음 5 + 어려운 모음 5 = 10
+const LETTER_ORDER = [
+  // ── 초반 14칸 ──
+  {col:5,row:1},{col:4,row:1},{col:3,row:1},{col:2,row:1},
+  {col:1,row:2},
+  {col:2,row:3},{col:3,row:3},
+  {col:4,row:4},
+  {col:3,row:5},{col:2,row:5},{col:1,row:5},
+  {col:1,row:6},
+  {col:2,row:7},{col:3,row:7},
+  // ── 중반 11칸 ──
+  {col:4,row:7},{col:5,row:7},{col:6,row:7},
+  {col:8,row:7},{col:9,row:7},{col:10,row:7},{col:11,row:7},{col:12,row:7},
+  {col:13,row:6},
+  {col:12,row:5},{col:11,row:5},
+  // ── 후반 10칸 ──
+  {col:10,row:5},
+  {col:10,row:4},
+  {col:11,row:3},{col:12,row:3},{col:13,row:3},
+  {col:13,row:2},
+  {col:12,row:1},{col:11,row:1},{col:10,row:1},{col:9,row:1}
+];
 
 // ===== 스피너 모달 =====
 let modalSpinning = false;
@@ -443,12 +493,27 @@ function buildBoard() {
   const board = document.getElementById('board');
   board.innerHTML = '';
 
-  // 랜덤 풀: 고정 칸 제외한 나머지 35칸 = 자음19 + 모음16
-  const pool = shuffle([
-    ...CONS.map(c => ({type:'cons', char:c})),
-    ...VOWS.map(v => ({type:'vowel', char:v}))
+  // ── 난이도 구간별로 자모를 셔플하여 좌표에 배치 ──
+  // 같은 구간 내에서는 위치가 랜덤이지만 구간 순서는 보장됨
+  const earlyChars = shuffle([
+    ...EASY_CONS.map(c => ({type:'cons',  char:c})),
+    ...EASY_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
   ]);
-  let idx = 0;
+  const midChars = shuffle([
+    ...MID_CONS.map(c => ({type:'cons',  char:c})),
+    ...MID_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
+  ]);
+  const hardChars = shuffle([
+    ...HARD_CONS.map(c => ({type:'cons',  char:c})),
+    ...HARD_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
+  ]);
+  const orderedChars = [...earlyChars, ...midChars, ...hardChars]; // 14+11+10 = 35
+
+  // 좌표 → 자모 매핑
+  const charByPos = {};
+  LETTER_ORDER.forEach((pos, i) => {
+    charByPos[`${pos.col}-${pos.row}`] = orderedChars[i];
+  });
 
   // 가운데 패널 추가
   const cp = document.createElement("div");
@@ -493,7 +558,7 @@ function buildBoard() {
       cell.classList.add('fixed');
       cell.appendChild(makeImg(`${BASE}mission.png`, 'mission'));
     } else {
-      const data = pool[idx++];
+      const data = charByPos[key];
       if (data.type === 'cons') {
         cell.appendChild(makeImg(`${BASE}${encodeURIComponent(data.char)}.png`, data.char));
         cell.addEventListener('click', () => openSpinner('cons', data.char));
