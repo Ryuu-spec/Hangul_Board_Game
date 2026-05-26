@@ -21,6 +21,7 @@ html, body {
   grid-template-columns: repeat(13, var(--cell));
   grid-template-rows: repeat(7, var(--cell));
   gap: var(--gap);
+  position: relative; /* 드래그 중인 말 토큰의 absolute 기준 */
 }
 .cell {
   border: 2px solid #aaa;
@@ -61,11 +62,27 @@ html, body {
   overflow: visible;
   justify-content: center;
   padding-bottom: calc(var(--cell) * 0.5);
+  position: relative;  /* 말 토큰의 absolute 기준 */
 }
 .center-panel img.title {
   width: 90%;
   object-fit: contain;
   padding: 0;
+}
+.piece-token {
+  position: absolute;
+  width: calc(var(--cell) * 0.72);
+  height: calc(var(--cell) * 0.72);
+  cursor: grab;
+  z-index: 200;
+  user-select: none;
+  filter: drop-shadow(1px 3px 4px rgba(0,0,0,0.4));
+}
+.piece-token img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
 }
 .players { display: flex; gap: 0px; font-size: calc(var(--cell) * 0.85); letter-spacing: -8px; margin-right: 8px; }
 .controls { display: flex; gap: 80px; align-items: center; }
@@ -605,41 +622,49 @@ function placePieces() {
   pieceEls.forEach(p => p.remove());
   pieceEls = [];
 
-  const board = document.getElementById('board');
-  const br = board.getBoundingClientRect();
-  const GAP = 4;
-  const sz = currentCell * 0.72;
-  const totalW = PIECE_IMAGES.length * sz + (PIECE_IMAGES.length - 1) * 6;
-  const startX = br.left + br.width / 2 - totalW / 2;
-  // row 2 area (top of center panel)
-  const startY = br.top + (currentCell + GAP) * 1.05;
+  const panel = document.querySelector('.center-panel');
+  if (!panel) return;
+
+  // 말 6개를 패널 상단에 가로로 배치
+  // center-panel은 grid 셀이라 보드와 함께 스케일링됨
+  // (Genially의 iframe transform과 무관하게 일관성 유지)
+  const count = PIECE_IMAGES.length;
+  const tokenPct = 16;   // 토큰 너비 = 패널 너비의 16% (cell의 약 72%)
+  const gapPct   = 1.5;  // 토큰 사이 간격
+  const totalPct = count * tokenPct + (count - 1) * gapPct;
+  const leftStart = (100 - totalPct) / 2;
+  const topPct = 8; // 패널 상단에서 8% 위치
 
   PIECE_IMAGES.forEach((src, i) => {
     const el = document.createElement('div');
     el.className = 'piece-token';
-    Object.assign(el.style, {
-      position: 'absolute',
-      left: (startX + i * (sz + 6)) + 'px',
-      top: startY + 'px',
-      width: sz + 'px',
-      height: sz + 'px',
-      cursor: 'grab',
-      zIndex: '200',
-      userSelect: 'none',
-      filter: 'drop-shadow(1px 3px 4px rgba(0,0,0,0.4))',
-    });
+    el.style.left = (leftStart + i * (tokenPct + gapPct)) + '%';
+    el.style.top  = topPct + '%';
+    // CSS에서 width/height는 calc(var(--cell)*0.72)로 보드와 함께 스케일
+
     const img = document.createElement('img');
     img.src = src;
-    img.style.cssText = 'width:100%;height:100%;object-fit:contain;pointer-events:none;';
     el.appendChild(img);
     makeDraggable(el);
-    document.body.appendChild(el);
+    panel.appendChild(el);
     pieceEls.push(el);
   });
 }
 
 function makeDraggable(el) {
   const start = (cx, cy) => {
+    // 현재 위치를 부모(center-panel) 기준 픽셀로 변환
+    const panel = el.parentElement;
+    const pr = panel.getBoundingClientRect();
+    // 드래그 시작 시 픽셀 좌표로 전환 (보드 외부로도 드래그 가능)
+    // 부모를 center-panel에서 board로 옮겨서 보드 전체에서 자유롭게 이동
+    const board = document.getElementById('board');
+    const br = board.getBoundingClientRect();
+    const rect = el.getBoundingClientRect();
+    el.style.left = (rect.left - br.left) + 'px';
+    el.style.top  = (rect.top  - br.top)  + 'px';
+    if (el.parentElement !== board) board.appendChild(el);
+
     const ox = parseFloat(el.style.left);
     const oy = parseFloat(el.style.top);
     el.style.cursor = 'grabbing';
