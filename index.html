@@ -123,88 +123,92 @@ html, body {
 /* ===== 스피너 모달 ===== */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: transparent;
   display: none;
-  align-items: center; justify-content: center;
   z-index: 5000;
   font-family: 'Noto Sans KR', sans-serif;
+  pointer-events: none;
 }
-.modal-overlay.active { display: flex; }
+.modal-overlay.active {
+  display: block;
+  pointer-events: all;
+}
 .modal-card {
-  background: #fff;
-  border-radius: 24px;
-  padding: 2rem 1.8rem 1.6rem;
-  width: 92%;
-  max-width: 460px;
+  background: rgba(18, 18, 18, 0.93);
+  border-radius: 20px;
+  padding: 1.5rem 1.5rem 1.3rem;
+  width: 360px;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-  position: relative;
-  animation: modalPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 16px 52px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.07);
+  position: absolute;
+  transform-origin: bottom center;
+  animation: modalRise 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-@keyframes modalPop {
-  0% { transform: scale(0.85); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+@keyframes modalRise {
+  0%   { transform: translateY(18px) scale(0.86); opacity: 0; }
+  100% { transform: translateY(0)    scale(1);    opacity: 1; }
 }
-.modal-card.consonant-mode { border: 3px solid #97C459; }
-.modal-card.vowel-mode { border: 3px solid #EF9F27; }
+.modal-card.consonant-mode { border: 2px solid rgba(151, 196, 89, 0.55); }
+.modal-card.vowel-mode     { border: 2px solid rgba(239, 159, 39, 0.55); }
 .modal-title {
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 700;
-  margin-bottom: 1.2rem;
+  margin-bottom: 1rem;
   letter-spacing: 0.5px;
 }
-.modal-card.consonant-mode .modal-title { color: #639922; }
-.modal-card.vowel-mode .modal-title { color: #BA7517; }
+.modal-card.consonant-mode .modal-title { color: #97C459; }
+.modal-card.vowel-mode     .modal-title { color: #EF9F27; }
 .modal-combo {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  margin-bottom: 1.2rem;
+  gap: 14px;
+  margin-bottom: 1rem;
 }
 .modal-char-box {
-  width: 130px; height: 130px;
-  border-radius: 20px;
+  width: 104px; height: 104px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 84px;
+  font-size: 70px;
   font-weight: 900;
-  background: #f8f8f8;
-  border: 2px solid #eee;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
   font-family: 'Noto Sans KR', sans-serif;
 }
 .modal-card.consonant-mode .modal-fixed { color: #97C459; }
-.modal-card.consonant-mode .modal-spin { color: #EF9F27; }
-.modal-card.vowel-mode .modal-fixed { color: #EF9F27; }
-.modal-card.vowel-mode .modal-spin { color: #97C459; }
+.modal-card.consonant-mode .modal-spin  { color: #EF9F27; }
+.modal-card.vowel-mode     .modal-fixed { color: #EF9F27; }
+.modal-card.vowel-mode     .modal-spin  { color: #97C459; }
 .modal-spin.spinning { animation: spinFlip 0.08s ease infinite alternate; }
-.modal-spin.done { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.modal-spin.done     { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
 @keyframes spinFlip {
-  0% { transform: scaleY(1); opacity: 1; }
+  0%   { transform: scaleY(1);   opacity: 1;   }
   100% { transform: scaleY(0.6); opacity: 0.7; }
 }
 @keyframes popIn {
-  0% { transform: scale(0.5); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
+  0%   { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
 }
 .modal-operator {
-  font-size: 36px;
-  color: #ccc;
+  font-size: 30px;
+  color: rgba(255,255,255,0.25);
   font-weight: 700;
 }
 .modal-hint {
-  font-size: 13px;
-  color: #999;
-  margin-bottom: 1.4rem;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.1rem;
   line-height: 1.5;
+  white-space: nowrap;
 }
 .modal-close {
-  background: #2a2a2a;
-  color: white;
-  border: none;
-  padding: 12px 48px;
-  font-size: 16px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 10px 42px;
+  font-size: 14px;
   font-weight: 700;
   font-family: 'Noto Sans KR', sans-serif;
   border-radius: 50px;
@@ -212,9 +216,79 @@ html, body {
   letter-spacing: 1px;
   transition: transform 0.1s, background 0.2s;
 }
-.modal-close:hover { background: #444; }
+.modal-close:hover  { background: rgba(255,255,255,0.18); }
 .modal-close:active { transform: scale(0.96); }
-.modal-close:disabled { opacity: 0.4; cursor: not-allowed; }
+.modal-close:disabled { opacity: 0.3; cursor: not-allowed; }
+/* 버튼 행 */
+.modal-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.modal-hint-btn {
+  background: transparent;
+  color: rgba(255,255,255,0.45);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  transition: transform 0.1s, background 0.2s, color 0.2s;
+}
+.modal-hint-btn:hover  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
+.modal-hint-btn:active { transform: scale(0.96); }
+/* 합체 결과 행 */
+.modal-result-row {
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 1rem;
+  display: none;
+}
+/* 결과를 콤보 행에 인라인으로 표시할 때 */
+.modal-combo.result-active {
+  gap: 8px;
+}
+.modal-combo.result-active .modal-char-box {
+  width: 76px;
+  height: 76px;
+  font-size: 50px;
+}
+.modal-combo.result-active .modal-operator {
+  font-size: 22px;
+}
+.modal-result-eq {
+  font-size: 30px;
+  color: rgba(255,255,255,0.25);
+  font-weight: 700;
+  animation: slideInLeft 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.modal-result-char {
+  width: 104px; height: 104px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 70px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.2);
+  font-family: 'Noto Sans KR', sans-serif;
+  color: white;
+  animation: resultPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes slideInLeft {
+  0%   { transform: translateX(-16px); opacity: 0; }
+  100% { transform: translateX(0);     opacity: 1; }
+}
+@keyframes resultPop {
+  0%   { transform: scale(0.3) translateX(-20px); opacity: 0; }
+  100% { transform: scale(1)   translateX(0);     opacity: 1; }
+}
 </style>
 </head>
 <body>
@@ -225,8 +299,12 @@ html, body {
   <div class="modal-card" id="modalCard">
     <div class="modal-title" id="modalTitle">Hangul Spinner</div>
     <div class="modal-combo" id="modalCombo"></div>
+    <div class="modal-result-row" id="modalResultRow"></div>
     <p class="modal-hint" id="modalHint">Combine and read it aloud!</p>
-    <button class="modal-close" id="modalCloseBtn" onclick="closeSpinner()">CLOSE</button>
+    <div class="modal-btn-row">
+      <button class="modal-hint-btn" id="modalHintBtn" onclick="showHint()" style="display:none;">💡 힌트 보기</button>
+      <button class="modal-close" id="modalCloseBtn" onclick="closeSpinner()">CLOSE</button>
+    </div>
   </div>
 </div>
 <script>
@@ -277,12 +355,12 @@ function shuffle(arr) {
   return a;
 }
 
-function openSpinner(type, char) {
+function openSpinner(type, char, triggerCell) {
   if (type === 'question') {
     // ? 칸은 나중에 결정 - 일단 placeholder
     return;
   }
-  showSpinnerModal(type, char);
+  showSpinnerModal(type, char, triggerCell);
 }
 
 // ===== 유효 음절 매핑 (무의미 조합 제외) =====
@@ -373,6 +451,8 @@ const LETTER_ORDER = [
 // ===== 스피너 모달 =====
 let modalSpinning = false;
 let modalInterval = null;
+let currentCons  = '';
+let currentVowel = '';
 const modalAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
 function playModalClick() {
@@ -402,7 +482,7 @@ function playModalChime() {
 
 function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-function showSpinnerModal(type, fixedChar) {
+function showSpinnerModal(type, fixedChar, triggerCell) {
   const overlay = document.getElementById('spinnerModal');
   const card    = document.getElementById('modalCard');
   const title   = document.getElementById('modalTitle');
@@ -437,16 +517,78 @@ function showSpinnerModal(type, fixedChar) {
       <div class="modal-char-box modal-fixed">${fixedChar}</div>`;
   }
 
+  // 자모 저장 (힌트용)
+  if (type === 'cons') { currentCons = fixedChar; currentVowel = ''; }
+  else                 { currentVowel = fixedChar; currentCons = ''; }
+
   // 모달 셋업
   card.className = 'modal-card ' + modeClass;
   title.textContent = titleText;
   hint.textContent  = hintText;
   combo.innerHTML   = layout;
+  combo.classList.remove('result-active');
   closeBtn.disabled = true;
+  document.getElementById('modalHintBtn').style.display = 'none';
+  document.getElementById('modalResultRow').style.display = 'none';
+  document.getElementById('modalResultRow').innerHTML = '';
+
+  // 먼저 카드를 숨긴 상태로 overlay 활성화 → 위치 계산 후 보여줌
+  card.style.opacity = '0';
   overlay.classList.add('active');
+
+  // 위치 계산 (다음 프레임에 실행해야 카드 크기가 확정됨)
+  requestAnimationFrame(() => {
+    positionModal(triggerCell);
+    // animation 재시작을 위해 class 잠깐 제거 후 재적용
+    card.style.animation = 'none';
+    card.style.opacity = '';
+    requestAnimationFrame(() => {
+      card.style.animation = '';
+    });
+  });
 
   // 자동 스피너 시작 (1~2초 후 자동 정지)
   startModalSpin(pool);
+}
+
+// 클릭한 칸 위에 카드 위치 계산
+function positionModal(triggerCell) {
+  const card = document.getElementById('modalCard');
+  const MARGIN = 10;
+
+  if (!triggerCell) {
+    // fallback: 화면 중앙
+    card.style.left = (window.innerWidth  / 2 - 150) + 'px';
+    card.style.top  = (window.innerHeight / 2 - 160) + 'px';
+    return;
+  }
+
+  const rect   = triggerCell.getBoundingClientRect();
+  const cardW  = card.offsetWidth  || 300;
+  const cardH  = card.offsetHeight || 280;
+  const vw     = window.innerWidth;
+  const vh     = window.innerHeight;
+
+  // 기본: 칸 바로 위에, 칸 중앙에 맞춤
+  let left = rect.left + rect.width  / 2 - cardW / 2;
+  let top  = rect.top  - cardH - MARGIN;
+
+  // 위 공간 부족 → 칸 아래에 (아래 행 칸용)
+  if (top < MARGIN) {
+    top = rect.bottom + MARGIN;
+    // 아래로 갈 때는 transform-origin을 top center로 변경
+    card.style.transformOrigin = 'top center';
+  } else {
+    card.style.transformOrigin = 'bottom center';
+  }
+
+  // 좌우 경계 클램프
+  left = Math.max(MARGIN, Math.min(left, vw - cardW - MARGIN));
+  // 상하 경계 클램프
+  top  = Math.max(MARGIN, Math.min(top,  vh - cardH - MARGIN));
+
+  card.style.left = left + 'px';
+  card.style.top  = top  + 'px';
 }
 
 function startModalSpin(pool) {
@@ -469,10 +611,16 @@ function startModalSpin(pool) {
       clearInterval(modalInterval);
       modalInterval = null;
       // 최종 결과
-      spinBox.textContent = rand(pool);
+      const spinResult = rand(pool);
+      spinBox.textContent = spinResult;
       spinBox.className   = 'modal-char-box modal-spin done';
       playModalChime();
       modalSpinning = false;
+      // 스핀 결과 저장 (힌트용)
+      if (currentCons)  currentVowel = spinResult;
+      else              currentCons  = spinResult;
+      // 힌트 버튼 + CLOSE 버튼 활성화
+      document.getElementById('modalHintBtn').style.display = '';
       closeBtn.disabled = false;
     }
   }, 70);
@@ -487,6 +635,29 @@ function closeSpinner() {
     modalInterval = null;
   }
   modalSpinning = false;
+}
+
+// 자음 + 모음 → 한글 한 글자 조합
+function combineKorean(cons, vowel) {
+  const CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  // ㅒ(index 3)와 ㅖ(index 7) 반드시 포함 — 유니코드 jungseong 순서와 정확히 일치해야 함
+  const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+  const ci = CHO.indexOf(cons);
+  const vi = JUNG.indexOf(vowel);
+  if (ci < 0 || vi < 0) return cons + vowel; // fallback
+  return String.fromCharCode(0xAC00 + (ci * 21 + vi) * 28);
+}
+
+// 힌트 보기 — ㅈ + ㅗ = 조 슬라이드인
+function showHint() {
+  const combined  = combineKorean(currentCons, currentVowel);
+  const combo     = document.getElementById('modalCombo');
+  combo.classList.add('result-active');
+  combo.insertAdjacentHTML('beforeend', `
+    <div class="modal-result-eq">=</div>
+    <div class="modal-result-char" style="width:76px;height:76px;font-size:50px;">${combined}</div>
+  `);
+  document.getElementById('modalHintBtn').style.display = 'none';
 }
 
 // 오버레이 바깥 클릭으로 닫기 (회전 끝난 후만)
@@ -570,7 +741,7 @@ function buildBoard() {
     } else if (fixed === 'question') {
       cell.classList.add('fixed');
       cell.appendChild(makeImg(`${BASE}question.png`, '?'));
-      cell.addEventListener('click', () => openSpinner('question', ''));
+      cell.addEventListener('click', () => openSpinner('question', '', cell));
     } else if (fixed === 'mission') {
       cell.classList.add('fixed');
       cell.appendChild(makeImg(`${BASE}mission.png`, 'mission'));
@@ -578,10 +749,10 @@ function buildBoard() {
       const data = charByPos[key];
       if (data.type === 'cons') {
         cell.appendChild(makeImg(`${BASE}${encodeURIComponent(data.char)}.png`, data.char));
-        cell.addEventListener('click', () => openSpinner('cons', data.char));
+        cell.addEventListener('click', () => openSpinner('cons', data.char, cell));
       } else {
         cell.appendChild(makeImg(`${BASE}${encodeURIComponent(data.char)}.png`, data.char));
-        cell.addEventListener('click', () => openSpinner('vowel', data.char));
+        cell.addEventListener('click', () => openSpinner('vowel', data.char, cell));
       }
     }
     board.appendChild(cell);
