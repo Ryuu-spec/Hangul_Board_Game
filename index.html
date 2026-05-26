@@ -289,6 +289,109 @@ html, body {
   0%   { transform: scale(0.3) translateX(-20px); opacity: 0; }
   100% { transform: scale(1)   translateX(0);     opacity: 1; }
 }
+
+/* ===== 자모 결합 애니메이션 스테이지 ===== */
+.modal-anim-stage {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  min-height: 138px;
+  margin-bottom: 1rem;
+  position: relative;
+}
+.anim-block {
+  position: relative;
+  width: 150px;
+  height: 138px;
+}
+.anim-jamo {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 900;
+  opacity: 0;
+}
+/* 좌우 배치 (ㅏ ㅓ ㅣ 계열) */
+.anim-cons-lr {
+  left: 0; top: 0;
+  width: 96px; height: 138px;
+  font-size: 66px;
+  color: #97C459;
+}
+.anim-vowel-lr {
+  right: 0; top: 8px;
+  width: 52px; height: 122px;
+  font-size: 38px;
+  color: #EF9F27;
+}
+/* 상하 배치 (ㅗ ㅜ ㅡ 계열) */
+.anim-cons-tb {
+  top: 0; left: 0;
+  width: 150px; height: 85px;
+  font-size: 66px;
+  color: #97C459;
+}
+.anim-vowel-tb {
+  bottom: 0; left: 0;
+  width: 150px; height: 52px;
+  font-size: 30px;
+  color: #EF9F27;
+}
+/* 결과 글자 */
+.anim-result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 900;
+  font-size: 90px;
+  color: white;
+  opacity: 0;
+  border-radius: 18px;
+}
+/* 키프레임 */
+@keyframes jamoFlyLeft {
+  0%   { opacity:0; transform: translateX(-90px) scale(0.4); }
+  65%  { transform: translateX(8px) scale(1.07); }
+  100% { opacity:1; transform: translateX(0) scale(1); }
+}
+@keyframes jamoFlyRight {
+  0%   { opacity:0; transform: translateX(90px) scale(0.4); }
+  65%  { transform: translateX(-8px) scale(1.07); }
+  100% { opacity:1; transform: translateX(0) scale(1); }
+}
+@keyframes jamoFlyTop {
+  0%   { opacity:0; transform: translateY(-70px) scale(0.4); }
+  65%  { transform: translateY(7px) scale(1.07); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes jamoFlyBottom {
+  0%   { opacity:0; transform: translateY(70px) scale(0.4); }
+  65%  { transform: translateY(-7px) scale(1.07); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
+@keyframes jamoFade {
+  0%   { opacity:1; transform: scale(1); filter: blur(0); }
+  100% { opacity:0; transform: scale(1.2); filter: blur(4px); }
+}
+@keyframes resultBurst {
+  0%   { opacity:0; transform: scale(0.15); filter: blur(10px); }
+  55%  { opacity:1; transform: scale(1.18); filter: blur(0); }
+  75%  { transform: scale(0.94); }
+  100% { opacity:1; transform: scale(1); }
+}
+@keyframes blockGlow {
+  0%   { filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+  40%  { filter: drop-shadow(0 0 18px rgba(255,255,200,0.9)); }
+  100% { filter: drop-shadow(0 0 0px rgba(255,255,255,0)); }
+}
+@keyframes animFadeIn {
+  from { opacity:0; } to { opacity:1; }
+}
 </style>
 </head>
 <body>
@@ -300,6 +403,7 @@ html, body {
     <div class="modal-title" id="modalTitle">Hangul Spinner</div>
     <div class="modal-combo" id="modalCombo"></div>
     <div class="modal-result-row" id="modalResultRow"></div>
+    <div class="modal-anim-stage" id="modalAnimStage"></div>
     <p class="modal-hint" id="modalHint">Combine and read it aloud!</p>
     <div class="modal-btn-row">
       <button class="modal-hint-btn" id="modalHintBtn" onclick="showHint()" style="display:none;">💡 Show Answer</button>
@@ -531,6 +635,12 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
   document.getElementById('modalHintBtn').style.display = 'none';
   document.getElementById('modalResultRow').style.display = 'none';
   document.getElementById('modalResultRow').innerHTML = '';
+  // 애니메이션 스테이지 초기화
+  const animStage = document.getElementById('modalAnimStage');
+  animStage.style.display = 'none';
+  animStage.innerHTML = '';
+  // combo 다시 보이기
+  combo.style.display = '';
 
   // 먼저 카드를 숨긴 상태로 overlay 활성화 → 위치 계산 후 보여줌
   card.style.opacity = '0';
@@ -648,16 +758,75 @@ function combineKorean(cons, vowel) {
   return String.fromCharCode(0xAC00 + (ci * 21 + vi) * 28);
 }
 
-// 힌트 보기 — ㅈ + ㅗ = 조 슬라이드인
+// 상하 배치 모음 (자음이 위, 모음이 아래)
+const TB_VOWS = ['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅢ','ㅟ','ㅚ','ㅝ'];
+
+// 자모 결합 과정 애니메이션
 function showHint() {
-  const combined  = combineKorean(currentCons, currentVowel);
-  const combo     = document.getElementById('modalCombo');
-  combo.classList.add('result-active');
-  combo.insertAdjacentHTML('beforeend', `
-    <div class="modal-result-eq">=</div>
-    <div class="modal-result-char" style="width:76px;height:76px;font-size:50px;">${combined}</div>
-  `);
+  const combined = combineKorean(currentCons, currentVowel);
   document.getElementById('modalHintBtn').style.display = 'none';
+
+  // combo 숨기고 애니메이션 스테이지 보이기
+  const combo = document.getElementById('modalCombo');
+  combo.style.display = 'none';
+
+  const stage = document.getElementById('modalAnimStage');
+  stage.style.display = 'flex';
+  stage.innerHTML = '';
+
+  const isTopBot = TB_VOWS.includes(currentVowel);
+
+  if (isTopBot) {
+    stage.innerHTML = `
+      <div class="anim-block" id="animBlock">
+        <div class="anim-jamo anim-cons-tb" id="animCons">${currentCons}</div>
+        <div class="anim-jamo anim-vowel-tb" id="animVowel">${currentVowel}</div>
+        <div class="anim-result" id="animResult">${combined}</div>
+      </div>`;
+  } else {
+    stage.innerHTML = `
+      <div class="anim-block" id="animBlock">
+        <div class="anim-jamo anim-cons-lr" id="animCons">${currentCons}</div>
+        <div class="anim-jamo anim-vowel-lr" id="animVowel">${currentVowel}</div>
+        <div class="anim-result" id="animResult">${combined}</div>
+      </div>`;
+  }
+
+  const animCons   = document.getElementById('animCons');
+  const animVowel  = document.getElementById('animVowel');
+  const animResult = document.getElementById('animResult');
+  const animBlock  = document.getElementById('animBlock');
+
+  // Phase 1: 자음 날아들어옴
+  setTimeout(() => {
+    animCons.style.animation = isTopBot
+      ? 'jamoFlyTop 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards'
+      : 'jamoFlyLeft 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards';
+  }, 60);
+
+  // Phase 2: 모음 날아들어옴 (자음보다 살짝 늦게)
+  setTimeout(() => {
+    animVowel.style.animation = isTopBot
+      ? 'jamoFlyBottom 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards'
+      : 'jamoFlyRight 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards';
+  }, 220);
+
+  // Phase 3: 블록 글로우
+  setTimeout(() => {
+    animBlock.style.animation = 'blockGlow 0.65s ease-out forwards';
+  }, 720);
+
+  // Phase 4: 자모 사라짐
+  setTimeout(() => {
+    animCons.style.animation  = 'jamoFade 0.28s ease-in forwards';
+    animVowel.style.animation = 'jamoFade 0.28s ease-in forwards';
+  }, 960);
+
+  // Phase 5: 결합 글자 등장
+  setTimeout(() => {
+    animResult.style.animation = 'resultBurst 0.62s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    playModalChime();
+  }, 1160);
 }
 
 // 오버레이 바깥 클릭으로 닫기 (회전 끝난 후만)
