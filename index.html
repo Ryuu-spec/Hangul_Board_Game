@@ -400,98 +400,107 @@ html, body {
 /* ===== 이벤트 카드 팝업 ===== */
 .ev-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.55);
   display: none; z-index: 6000;
   align-items: center; justify-content: center;
 }
 .ev-overlay.active { display: flex; }
 
+/* 흰 박스 (Genially 스타일) */
 .ev-modal {
-  background: #1a1a1a;
-  border-radius: 20px;
-  padding: 28px 28px 22px;
+  background: white;
+  border-radius: 24px;
+  padding: 20px 20px 18px;
+  width: 580px;
+  box-shadow: 0 24px 72px rgba(0,0,0,0.45);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 18px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  gap: 16px;
+  animation: evModalIn 0.3s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes evModalIn {
+  0%   { transform: scale(0.82); opacity: 0; }
+  100% { transform: scale(1);    opacity: 1; }
 }
 
-.ev-fan {
+/* ── 카드 덱 영역 ── */
+.ev-deck {
   position: relative;
-  width: 380px;
-  height: 260px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* 왼쪽 카드: 명시적 위치 */
-#evLeft {
-  position: absolute;
-  width: 200px;
-  left: 20px; top: 40px;
-  transform: rotate(-20deg);
-  z-index: 1;
-  border-radius: 12px;
-  pointer-events: none;
+/* 공통 카드 스타일 */
+.ev-deck-card {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 10px 36px rgba(0,0,0,0.35);
+  display: block;
 }
 
-/* 오른쪽 카드: 명시적 위치 */
-#evRight {
-  position: absolute;
-  width: 200px;
-  right: 20px; top: 40px;
-  transform: rotate(20deg);
-  z-index: 1;
-  border-radius: 12px;
-  pointer-events: none;
-}
-
-/* 앞 카드: 정중앙 */
+/* 앞 덱 카드 (클릭 전) */
 #evFront {
-  position: absolute;
-  width: 220px;
-  left: 50%; top: 10px;
-  margin-left: -110px;
-  z-index: 2;
-  border-radius: 12px;
   cursor: pointer;
-  transition: opacity 0.2s, top 0.15s;
+  transition: transform 0.18s ease, opacity 0.2s ease;
 }
-#evFront:hover { top: 2px; }
-#evFront.done {
-  opacity: 0;
-  top: 30px;
-  pointer-events: none;
+#evFront:not(.ev-spinning):hover { transform: translateY(-6px) scale(1.01); }
+#evFront.ev-spinning { cursor: default; }
+#evFront.ev-hide {
+  visibility: hidden;
 }
 
-/* 결과 카드 */
-#evResult {
+/* 카드 슬롯 (8장 미리 로드, 겹쳐서 대기) */
+.ev-card-slot {
   position: absolute;
-  width: 220px;
-  left: 50%; top: 10px;
-  margin-left: -110px;
-  z-index: 3;
-  border-radius: 12px;
-  display: none;
+  top: 0; left: 0;
+  width: 100%;
   opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
 }
-.ev-result-show {
-  animation: evDeal 0.4s cubic-bezier(0.34,1.4,0.64,1) forwards;
+.ev-card-slot.ev-visible {
+  opacity: 1;
 }
-@keyframes evDeal {
-  0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
-  100% { opacity: 1; transform: scale(1)    translateY(0); }
+.ev-card-slot.ev-final {
+  opacity: 1;
+  animation: evFinalLand 0.4s cubic-bezier(0.34,1.5,0.64,1) forwards;
+}
+@keyframes evFinalLand {
+  0%   { transform: scale(1) translateY(0); }
+  40%  { transform: scale(1.04) translateY(-5px); }
+  70%  { transform: scale(0.98) translateY(1px); }
+  100% { transform: scale(1)    translateY(0); }
 }
 
-.ev-close {
+/* X 버튼 (모달 우상단) */
+.ev-x-btn {
+  position: absolute;
+  top: -14px; right: -14px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
   display: none;
-  background: white; color: #222;
-  border: none; padding: 11px 0; width: 380px;
-  font-size: 13px; font-weight: 700;
-  font-family: sans-serif; border-radius: 10px;
-  cursor: pointer; letter-spacing: 2px;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  transition: background 0.15s, transform 0.1s;
+  z-index: 10;
+  line-height: 1;
 }
-.ev-close:hover  { background: #eee; }
-.ev-close:active { transform: scale(0.97); }
+.ev-x-btn:hover  { background: #444; }
+.ev-x-btn:active { transform: scale(0.92); }
+.ev-modal-wrap {
+  position: relative;
+  display: inline-block;
+}
 </style>
 </head>
 <body>
@@ -500,14 +509,14 @@ html, body {
 
 <!-- 이벤트 카드 팝업 -->
 <div class="ev-overlay" id="evModal">
-  <div class="ev-modal">
-    <div class="ev-fan" id="evFan">
-      <img id="evLeft"   src="" alt="">
-      <img id="evRight"  src="" alt="">
-      <img id="evFront"  src="" alt="" onclick="evReveal()">
-      <img id="evResult" src="" alt="">
+  <div class="ev-modal-wrap">
+    <div class="ev-modal">
+      <div class="ev-deck" id="evDeck">
+        <img id="evFront"  class="ev-deck-card" src="" alt="" onclick="evReveal()">
+        <img id="evResult" class="ev-deck-card ev-card-slot" src="" alt="">
+      </div>
     </div>
-    <button class="ev-close" id="evClose" onclick="evClose()">CLOSE</button>
+    <button class="ev-x-btn" id="evXBtn" onclick="evClose()">✕</button>
   </div>
 </div>
 
@@ -1199,7 +1208,8 @@ function playClickSound() {
 
 function preloadImages() {
   const allChars = [...CONS, ...VOWS];
-  const specials = ['start', 'goal', 'question', 'mission', 'title', 'boy_1', 'boy_2', 'boy_3', 'girl_1', 'girl_2', 'girl_3'];
+  const specials = ['start', 'goal', 'question', 'mission', 'title', 'boy_1', 'boy_2', 'boy_3', 'girl_1', 'girl_2', 'girl_3',
+    'card_0','card_1','card_2','card_3','card_4','card_5','card_6','card_7','card_8'];
   const srcs = [
     ...allChars.map(c => `${BASE}${encodeURIComponent(c)}.png`),
     ...specials.map(s => `${BASE}${s}.png`)
@@ -1241,46 +1251,109 @@ function preloadImages() {
 
 
 
-// ===== 이벤트 카드 팝업 =====
-const EV_COUNT = 8; // card_1 ~ card_8
+// ===== 이벤트 카드 사운드 =====
+const EV_COUNT = 8;
+
+// Freesound David819 CC0 — spin-end.mp3 (668433)
+const SND_TICK_URL = "https://cdn.freesound.org/previews/668/668433_14606782-lq.mp3";
+
+// 오디오 pool: 미리 4개 로드해두고 순환 사용 → new Audio() 반복 생성 없음
+const TICK_POOL = Array.from({length: 4}, () => {
+  const a = new Audio(SND_TICK_URL);
+  a.volume = 0.5;
+  a.load();
+  return a;
+});
+let tickPoolIdx = 0;
+
+function playCardTick() {
+  const snd = TICK_POOL[tickPoolIdx];
+  tickPoolIdx = (tickPoolIdx + 1) % TICK_POOL.length;
+  snd.currentTime = 0;
+  snd.play().catch(() => {});
+}
+
+function playCardReveal() { /* 사운드 없음 */ }
+// 단일 결과 img — preloadImages로 캐시된 이미지를 src만 바꿔서 표시
+// GPU 레이어 1개만 사용 → 깜빡임 없음
+function getResult() { return document.getElementById('evResult'); }
+
+function showCard(idx) {
+  // 이미 캐시된 이미지라 src 교체가 즉각적 (네트워크 요청 없음)
+  getResult().src = BASE + 'card_' + idx + '.png';
+}
 
 function openEventPouch() {
-  const base = BASE + 'card_';
-  const ids = Array.from({length: EV_COUNT}, (_, i) => i + 1)
-                   .sort(() => Math.random() - 0.5);
+  const result = getResult();
+  result.classList.remove('ev-visible', 'ev-final');
+  result.src = '';
 
-  document.getElementById('evLeft').src    = base + ids[0] + '.png';
-  document.getElementById('evRight').src   = base + ids[1] + '.png';
-  document.getElementById('evFront').src   = base + '0.png';
-  document.getElementById('evFront').classList.remove('done');
-  document.getElementById('evResult').style.display = 'none';
-  document.getElementById('evClose').style.display  = 'none';
+  const front = document.getElementById('evFront');
+  front.src = BASE + 'card_0.png';
+  front.classList.remove('ev-spinning', 'ev-hide');
+  front.style.pointerEvents = '';
+
+  document.getElementById('evXBtn').style.display = 'none';
   document.getElementById('evModal').classList.add('active');
 }
 
 function evReveal() {
   const front = document.getElementById('evFront');
-  if (front.classList.contains('done')) return;
-  front.classList.add('done');
+  if (front.classList.contains('ev-spinning')) return;
 
-  const winner = Math.floor(Math.random() * EV_COUNT) + 1;
-  const result = document.getElementById('evResult');
-  result.src = BASE + 'card_' + winner + '.png';
+  front.classList.add('ev-spinning', 'ev-hide');
+  front.style.pointerEvents = 'none';
 
-  setTimeout(() => {
-    result.style.display = 'block';
-    result.classList.add('ev-result-show');
-    document.getElementById('evClose').style.display = 'block';
-  }, 200);
+  const result = getResult();
+  result.classList.add('ev-visible');
+
+  const finalIdx = Math.floor(Math.random() * EV_COUNT) + 1;
+  const schedule = [60,70,80,90,100,120,150,180,220,270,330,410,500];
+
+  let step = 0;
+  let lastIdx = -1;
+
+  function nextCard() {
+    if (step < schedule.length - 1) {
+      let randIdx;
+      do { randIdx = Math.floor(Math.random() * EV_COUNT) + 1; }
+      while (randIdx === lastIdx);
+      lastIdx = randIdx;
+      showCard(randIdx);
+      playCardTick();
+      step++;
+      setTimeout(nextCard, schedule[step]);
+    } else {
+      // 최종 카드 확정 — 바운스 애니메이션
+      showCard(finalIdx);
+      result.classList.remove('ev-final');
+      void result.offsetWidth; // reflow로 애니메이션 재시작
+      result.classList.add('ev-final');
+
+      setTimeout(() => {
+        document.getElementById('evXBtn').style.display = 'flex';
+      }, 350);
+    }
+  }
+
+  // 첫 카드 즉시 표시
+  let firstIdx;
+  do { firstIdx = Math.floor(Math.random() * EV_COUNT) + 1; }
+  while (firstIdx === finalIdx);
+  lastIdx = firstIdx;
+  showCard(firstIdx);
+  setTimeout(nextCard, schedule[0]);
 }
 
 function evClose() {
   document.getElementById('evModal').classList.remove('active');
-  // 초기화
   const front = document.getElementById('evFront');
-  front.style.opacity = '';
-  front.style.transform = '';
-  front.style.transition = '';
+  front.classList.remove('ev-spinning', 'ev-hide');
+  front.style.pointerEvents = '';
+  const result = getResult();
+  result.classList.remove('ev-visible', 'ev-final');
+  result.src = '';
+  document.getElementById('evXBtn').style.display = 'none';
 }
 
 
