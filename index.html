@@ -392,10 +392,124 @@ html, body {
 @keyframes animFadeIn {
   from { opacity:0; } to { opacity:1; }
 }
+
+
+
+
+
+/* ===== 이벤트 카드 팝업 ===== */
+.ev-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none; z-index: 6000;
+  align-items: center; justify-content: center;
+}
+.ev-overlay.active { display: flex; }
+
+.ev-modal {
+  background: #1a1a1a;
+  border-radius: 20px;
+  padding: 28px 28px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+.ev-fan {
+  position: relative;
+  width: 380px;
+  height: 260px;
+}
+
+/* 왼쪽 카드: 명시적 위치 */
+#evLeft {
+  position: absolute;
+  width: 200px;
+  left: 20px; top: 40px;
+  transform: rotate(-20deg);
+  z-index: 1;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* 오른쪽 카드: 명시적 위치 */
+#evRight {
+  position: absolute;
+  width: 200px;
+  right: 20px; top: 40px;
+  transform: rotate(20deg);
+  z-index: 1;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+/* 앞 카드: 정중앙 */
+#evFront {
+  position: absolute;
+  width: 220px;
+  left: 50%; top: 10px;
+  margin-left: -110px;
+  z-index: 2;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.2s, top 0.15s;
+}
+#evFront:hover { top: 2px; }
+#evFront.done {
+  opacity: 0;
+  top: 30px;
+  pointer-events: none;
+}
+
+/* 결과 카드 */
+#evResult {
+  position: absolute;
+  width: 220px;
+  left: 50%; top: 10px;
+  margin-left: -110px;
+  z-index: 3;
+  border-radius: 12px;
+  display: none;
+  opacity: 0;
+}
+.ev-result-show {
+  animation: evDeal 0.4s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+@keyframes evDeal {
+  0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
+  100% { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+.ev-close {
+  display: none;
+  background: white; color: #222;
+  border: none; padding: 11px 0; width: 380px;
+  font-size: 13px; font-weight: 700;
+  font-family: sans-serif; border-radius: 10px;
+  cursor: pointer; letter-spacing: 2px;
+}
+.ev-close:hover  { background: #eee; }
+.ev-close:active { transform: scale(0.97); }
 </style>
 </head>
 <body>
 <div class="board" id="board"></div>
+
+
+<!-- 이벤트 카드 팝업 -->
+<div class="ev-overlay" id="evModal">
+  <div class="ev-modal">
+    <div class="ev-fan" id="evFan">
+      <img id="evLeft"   src="" alt="">
+      <img id="evRight"  src="" alt="">
+      <img id="evFront"  src="" alt="" onclick="evReveal()">
+      <img id="evResult" src="" alt="">
+    </div>
+    <button class="ev-close" id="evClose" onclick="evClose()">CLOSE</button>
+  </div>
+</div>
 
 <!-- 스피너 모달 -->
 <div class="modal-overlay" id="spinnerModal">
@@ -412,7 +526,7 @@ html, body {
   </div>
 </div>
 <script>
-const BASE = 'https://ryuu-spec.github.io/Hangul_Board_Game/image/';
+const BASE = 'https://cdn.jsdelivr.net/gh/Ryuu-spec/Hangul_Board_Game@main/image/';
 const SPINNER_BASE = 'https://ryuu-spec.github.io/Hangul-Syllable-spinner/';
 
 const CONS = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -903,10 +1017,10 @@ function buildBoard() {
 
     if (fixed === 'start') {
       cell.classList.add('start');
-      cell.appendChild(makeImg(`${BASE}Start.png`, 'START'));
+      cell.appendChild(makeImg(`${BASE}start.png`, 'START'));
     } else if (fixed === 'goal') {
       cell.classList.add('goal');
-      cell.appendChild(makeImg(`${BASE}Goal.png`, 'GOAL'));
+      cell.appendChild(makeImg(`${BASE}goal.png`, 'GOAL'));
     } else if (fixed === 'question') {
       cell.classList.add('fixed');
       cell.appendChild(makeImg(`${BASE}question.png`, '?'));
@@ -914,6 +1028,7 @@ function buildBoard() {
     } else if (fixed === 'mission') {
       cell.classList.add('fixed');
       cell.appendChild(makeImg(`${BASE}mission.png`, 'mission'));
+      cell.addEventListener('click', () => openEventPouch());
     } else {
       const data = charByPos[key];
       if (data.type === 'cons') {
@@ -950,12 +1065,12 @@ let currentCell = 80;
 let pieceEls = [];
 
 const PIECE_IMAGES = [
-  `${BASE}Boy_1.png`,
-  `${BASE}Girl_1.png`,
-  `${BASE}Boy_2.png`,
-  `${BASE}Girl_2.png`,
-  `${BASE}Boy_3.png`,
-  `${BASE}Girl_3.png`,
+  `${BASE}boy_1.png`,
+  `${BASE}girl_1.png`,
+  `${BASE}boy_2.png`,
+  `${BASE}girl_2.png`,
+  `${BASE}boy_3.png`,
+  `${BASE}girl_3.png`,
 ];
 
 function placePieces() {
@@ -1084,7 +1199,7 @@ function playClickSound() {
 
 function preloadImages() {
   const allChars = [...CONS, ...VOWS];
-  const specials = ['Start', 'Goal', 'question', 'mission', 'title', 'Boy_1', 'Boy_2', 'Boy_3', 'Girl_1', 'Girl_2', 'Girl_3'];
+  const specials = ['start', 'goal', 'question', 'mission', 'title', 'boy_1', 'boy_2', 'boy_3', 'girl_1', 'girl_2', 'girl_3'];
   const srcs = [
     ...allChars.map(c => `${BASE}${encodeURIComponent(c)}.png`),
     ...specials.map(s => `${BASE}${s}.png`)
@@ -1123,6 +1238,51 @@ function preloadImages() {
     setTimeout(() => overlay.remove(), 200);
   });
 }
+
+
+
+// ===== 이벤트 카드 팝업 =====
+const EV_COUNT = 8; // card_1 ~ card_8
+
+function openEventPouch() {
+  const base = BASE + 'card_';
+  const ids = Array.from({length: EV_COUNT}, (_, i) => i + 1)
+                   .sort(() => Math.random() - 0.5);
+
+  document.getElementById('evLeft').src    = base + ids[0] + '.png';
+  document.getElementById('evRight').src   = base + ids[1] + '.png';
+  document.getElementById('evFront').src   = base + '0.png';
+  document.getElementById('evFront').classList.remove('done');
+  document.getElementById('evResult').style.display = 'none';
+  document.getElementById('evClose').style.display  = 'none';
+  document.getElementById('evModal').classList.add('active');
+}
+
+function evReveal() {
+  const front = document.getElementById('evFront');
+  if (front.classList.contains('done')) return;
+  front.classList.add('done');
+
+  const winner = Math.floor(Math.random() * EV_COUNT) + 1;
+  const result = document.getElementById('evResult');
+  result.src = BASE + 'card_' + winner + '.png';
+
+  setTimeout(() => {
+    result.style.display = 'block';
+    result.classList.add('ev-result-show');
+    document.getElementById('evClose').style.display = 'block';
+  }, 200);
+}
+
+function evClose() {
+  document.getElementById('evModal').classList.remove('active');
+  // 초기화
+  const front = document.getElementById('evFront');
+  front.style.opacity = '';
+  front.style.transform = '';
+  front.style.transition = '';
+}
+
 
 function resize() {
   const GAP = 4, COLS = 13, ROWS = 7;
