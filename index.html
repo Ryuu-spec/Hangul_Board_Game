@@ -151,13 +151,16 @@ html, body {
 .modal-card.consonant-mode { border: 2px solid rgba(151, 196, 89, 0.55); }
 .modal-card.vowel-mode     { border: 2px solid rgba(239, 159, 39, 0.55); }
 .modal-title {
-  font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 1rem;
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 1.15rem;
   letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-.modal-card.consonant-mode .modal-title { color: #97C459; }
-.modal-card.vowel-mode     .modal-title { color: #EF9F27; }
+.modal-title .spark { font-size: 14px; margin: 0 7px; opacity: 0.85; vertical-align: 2px; }
+.modal-card.consonant-mode .modal-title { color: #B6E472; text-shadow: 0 0 14px rgba(151,196,89,0.55); }
+.modal-card.vowel-mode     .modal-title { color: #F7B24C; text-shadow: 0 0 14px rgba(239,159,39,0.55); }
 .modal-combo {
   display: flex;
   align-items: center;
@@ -166,21 +169,38 @@ html, body {
   margin-bottom: 1rem;
 }
 .modal-char-box {
-  width: 104px; height: 104px;
-  border-radius: 16px;
+  width: 108px; height: 108px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 70px;
+  font-size: 72px;
   font-weight: 900;
-  background: rgba(255,255,255,0.06);
-  border: 1.5px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  border: 2.5px solid rgba(255,255,255,0.1);
   font-family: 'Noto Sans KR', sans-serif;
+  transition: box-shadow 0.25s, border-color 0.25s;
 }
-.modal-card.consonant-mode .modal-fixed { color: #97C459; }
-.modal-card.consonant-mode .modal-spin  { color: #EF9F27; }
-.modal-card.vowel-mode     .modal-fixed { color: #EF9F27; }
-.modal-card.vowel-mode     .modal-spin  { color: #97C459; }
+.modal-card.consonant-mode .modal-fixed {
+  color: #B6E472;
+  border-color: rgba(151,196,89,0.85);
+  box-shadow: 0 0 20px rgba(151,196,89,0.38), inset 0 0 14px rgba(151,196,89,0.12);
+}
+.modal-card.consonant-mode .modal-spin {
+  color: #F7B24C;
+  border-color: rgba(239,159,39,0.85);
+  box-shadow: 0 0 20px rgba(239,159,39,0.38), inset 0 0 14px rgba(239,159,39,0.12);
+}
+.modal-card.vowel-mode .modal-fixed {
+  color: #F7B24C;
+  border-color: rgba(239,159,39,0.85);
+  box-shadow: 0 0 20px rgba(239,159,39,0.38), inset 0 0 14px rgba(239,159,39,0.12);
+}
+.modal-card.vowel-mode .modal-spin {
+  color: #B6E472;
+  border-color: rgba(151,196,89,0.85);
+  box-shadow: 0 0 20px rgba(151,196,89,0.38), inset 0 0 14px rgba(151,196,89,0.12);
+}
 .modal-spin.spinning { animation: spinFlip 0.08s ease infinite alternate; }
 .modal-spin.done     { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
 @keyframes spinFlip {
@@ -197,11 +217,12 @@ html, body {
   font-weight: 700;
 }
 .modal-hint {
-  font-size: 11px;
-  color: rgba(255,255,255,0.4);
+  font-size: 13px;
+  color: rgba(255,255,255,0.68);
   margin-bottom: 1.1rem;
   line-height: 1.5;
   white-space: nowrap;
+  font-weight: 500;
 }
 .modal-close {
   background: rgba(255,255,255,0.1);
@@ -226,20 +247,21 @@ html, body {
   justify-content: center;
 }
 .modal-hint-btn {
-  background: transparent;
-  color: rgba(255,255,255,0.45);
-  border: 1px solid rgba(255,255,255,0.15);
-  padding: 10px 24px;
+  background: #FFD43B;
+  color: #2c2500;
+  border: none;
+  padding: 11px 26px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   font-family: 'Noto Sans KR', sans-serif;
   border-radius: 50px;
   cursor: pointer;
   letter-spacing: 0.5px;
   white-space: nowrap;
-  transition: transform 0.1s, background 0.2s, color 0.2s;
+  box-shadow: 0 0 16px rgba(255,212,59,0.4);
+  transition: transform 0.1s, background 0.2s, box-shadow 0.2s;
 }
-.modal-hint-btn:hover  { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.85); }
+.modal-hint-btn:hover  { background: #FFE066; box-shadow: 0 0 22px rgba(255,212,59,0.6); }
 .modal-hint-btn:active { transform: scale(0.96); }
 /* 합체 결과 행 */
 .modal-result-row {
@@ -501,6 +523,255 @@ html, body {
   position: relative;
   display: inline-block;
 }
+
+/* ===== ? 칸 (받침 퀴즈) 모달 ===== */
+/* 탈 칸과 동일한 overlay 구조 */
+.qz-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: none; z-index: 6000;
+  align-items: center; justify-content: center;
+}
+.qz-overlay.active { display: flex; }
+
+/* 흰 외곽 컨테이너 (탈 칸 스타일) */
+.qz-modal {
+  background: white;
+  border-radius: 24px;
+  padding: 18px 18px 18px;
+  width: 600px;
+  box-shadow: 0 24px 72px rgba(0,0,0,0.45);
+  animation: evModalIn 0.3s cubic-bezier(0.34,1.4,0.64,1);
+  position: relative;
+}
+
+/* 내부 어두운 영역 (자모 결합 스타일) */
+.qz-inner {
+  background: rgba(18,18,18,0.95);
+  border-radius: 16px;
+  padding: 20px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+/* 타이틀 */
+.qz-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: #C77DFF;
+  text-shadow: 0 0 14px rgba(199,125,255,0.55);
+  margin-bottom: 14px;
+  white-space: nowrap;
+  font-family: 'Noto Sans KR', sans-serif;
+}
+.qz-title .spark { font-size: 13px; margin: 0 7px; opacity: 0.85; vertical-align: 2px; }
+
+/* 3칸 스피너 행 */
+.qz-combo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.qz-box {
+  width: 100px; height: 100px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  background: rgba(255,255,255,0.05);
+  transition: box-shadow 0.25s, border-color 0.25s;
+}
+.qz-box.qz-cho  { color: #B6E472; border: 2.5px solid rgba(151,196,89,0.85);  box-shadow: 0 0 20px rgba(151,196,89,0.38),  inset 0 0 14px rgba(151,196,89,0.12); }
+.qz-box.qz-jung { color: #F7B24C; border: 2.5px solid rgba(239,159,39,0.85);  box-shadow: 0 0 20px rgba(239,159,39,0.38),  inset 0 0 14px rgba(239,159,39,0.12); }
+.qz-box.qz-jong { color: #C77DFF; border: 2.5px solid rgba(199,125,255,0.85); box-shadow: 0 0 20px rgba(199,125,255,0.38), inset 0 0 14px rgba(199,125,255,0.12); }
+.qz-box.spinning { animation: spinFlip 0.08s ease infinite alternate; }
+.qz-box.done     { animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.qz-operator {
+  font-size: 26px;
+  color: rgba(255,255,255,0.25);
+  font-weight: 700;
+}
+
+/* 힌트 텍스트 */
+.qz-hint {
+  font-size: 12px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 12px;
+  font-family: 'Noto Sans KR', sans-serif;
+  white-space: nowrap;
+}
+
+/* 버튼 행 */
+.qz-btn-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.qz-hint-btn {
+  background: #FFD43B;
+  color: #2c2500;
+  border: none;
+  padding: 10px 24px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 0 16px rgba(255,212,59,0.4);
+  transition: transform 0.1s, background 0.2s;
+}
+.qz-hint-btn:hover  { background: #FFE066; }
+.qz-hint-btn:active { transform: scale(0.96); }
+.qz-close-btn {
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 10px 36px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: transform 0.1s, background 0.2s;
+}
+.qz-close-btn:hover  { background: rgba(255,255,255,0.18); }
+.qz-close-btn:active { transform: scale(0.96); }
+.qz-close-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* X 버튼 (모달 우상단) */
+.qz-x-btn {
+  position: absolute;
+  top: -14px; right: -14px;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  transition: background 0.15s, transform 0.1s;
+  z-index: 10;
+  line-height: 1;
+}
+.qz-x-btn:hover  { background: #444; }
+.qz-x-btn:active { transform: scale(0.92); }
+.qz-modal-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+/* 애니메이션 스테이지 (자모 결합 스타일 그대로) */
+.qz-anim-stage {
+  display: none;
+  justify-content: center;
+  align-items: center;
+  min-height: 180px;
+  margin-bottom: 12px;
+  position: relative;
+}
+
+/* 3자모용 블록 */
+.anim-block-3 {
+  position: relative;
+  width: 160px;
+  height: 172px;
+}
+/* 초성 (좌우 배치) */
+.anim3-cons-lr {
+  position: absolute;
+  left: 0; top: 0;
+  width: 100px; height: 145px;
+  font-size: 66px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  color: #B6E472;
+  opacity: 0;
+}
+/* 중성 (좌우 배치) */
+.anim3-vowel-lr {
+  position: absolute;
+  right: 0; top: 8px;
+  width: 54px; height: 115px;
+  font-size: 38px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  color: #F7B24C;
+  opacity: 0;
+}
+/* 초성 (상하 배치) */
+.anim3-cons-tb {
+  position: absolute;
+  top: 0; left: 0;
+  width: 160px; height: 88px;
+  font-size: 66px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  color: #B6E472;
+  opacity: 0;
+}
+/* 중성 (상하 배치) */
+.anim3-vowel-tb {
+  position: absolute;
+  top: 88px; left: 0;
+  width: 160px; height: 52px;
+  font-size: 30px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  color: #F7B24C;
+  opacity: 0;
+}
+/* 받침 */
+.anim3-batchim {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 160px; height: 44px;
+  font-size: 28px;
+  font-weight: 900;
+  font-family: 'Noto Sans KR', sans-serif;
+  display: flex; align-items: center; justify-content: center;
+  color: #C77DFF;
+  opacity: 0;
+}
+/* 결과 글자 */
+.anim3-result {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-weight: 900;
+  font-size: 96px;
+  color: white;
+  opacity: 0;
+  border-radius: 18px;
+}
+@keyframes jamoFlyBottom3 {
+  0%   { opacity:0; transform: translateY(55px) scale(0.4); }
+  65%  { transform: translateY(-5px) scale(1.07); }
+  100% { opacity:1; transform: translateY(0) scale(1); }
+}
 </style>
 </head>
 <body>
@@ -517,6 +788,31 @@ html, body {
       </div>
     </div>
     <button class="ev-x-btn" id="evXBtn" onclick="evClose()">✕</button>
+  </div>
+</div>
+
+<!-- ? 칸 받침 퀴즈 팝업 -->
+<div class="qz-overlay" id="qzModal">
+  <div class="qz-modal-wrap">
+    <div class="qz-modal">
+      <div class="qz-inner">
+        <div class="qz-title"><span class="spark">✦</span>Batchim Quiz<span class="spark">✦</span></div>
+        <div class="qz-combo" id="qzCombo">
+          <div class="qz-box qz-cho"  id="qzCho">?</div>
+          <div class="qz-operator">+</div>
+          <div class="qz-box qz-jung" id="qzJung">?</div>
+          <div class="qz-operator">+</div>
+          <div class="qz-box qz-jong" id="qzJong">?</div>
+        </div>
+        <div class="qz-anim-stage" id="qzAnimStage"></div>
+        <p class="qz-hint" id="qzHint">초성 + 중성 + 종성을 합쳐 읽어보세요! 🔊</p>
+        <div class="qz-btn-row">
+          <button class="qz-hint-btn" id="qzHintBtn" style="display:none;">💡 Show Answer</button>
+          <button class="qz-close-btn" id="qzCloseBtn" disabled>CLOSE</button>
+        </div>
+      </div>
+    </div>
+    <button class="qz-x-btn" id="qzXBtn">✕</button>
   </div>
 </div>
 
@@ -584,7 +880,7 @@ function shuffle(arr) {
 
 function openSpinner(type, char, triggerCell) {
   if (type === 'question') {
-    // ? 칸은 나중에 결정 - 일단 placeholder
+    openQuizModal();
     return;
   }
   showSpinnerModal(type, char, triggerCell);
@@ -725,8 +1021,8 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
     // 해당 자음과 결합 가능한 모음 풀만 사용
     pool = VALID_VOWELS_FOR_CONS[fixedChar] || VOWS;
     modeClass = 'consonant-mode';
-    titleText = 'Hangul Vowel Picker';
-    hintText  = 'Combine with the consonant and read it aloud!';
+    titleText = 'Hangul Vowel Shuffle';
+    hintText  = 'Blend and say it! 🔊';
     layout = `
       <div class="modal-char-box modal-fixed">${fixedChar}</div>
       <div class="modal-operator">+</div>
@@ -736,8 +1032,8 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
     pool = validConsonantsForVowel(fixedChar);
     if (pool.length === 0) pool = CONS; // fallback (이론상 발생 안 함)
     modeClass = 'vowel-mode';
-    titleText = 'Hangul Consonant Picker';
-    hintText  = 'Combine with the vowel and read it aloud!';
+    titleText = 'Hangul Consonant Shuffle';
+    hintText  = 'Blend and say it! 🔊';
     layout = `
       <div class="modal-char-box modal-spin" id="modalSpinBox">?</div>
       <div class="modal-operator">+</div>
@@ -750,7 +1046,7 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
 
   // 모달 셋업
   card.className = 'modal-card ' + modeClass;
-  title.textContent = titleText;
+  title.innerHTML = '<span class="spark">✦</span>' + titleText + '<span class="spark">✦</span>';
   hint.textContent  = hintText;
   combo.innerHTML   = layout;
   combo.classList.remove('result-active');
@@ -869,6 +1165,267 @@ function closeSpinner() {
   }
   modalSpinning = false;
 }
+
+// ===== ? 칸 받침 퀴즈 =====
+// 유의미한 받침 음절 직접 화이트리스트
+// 형식: [완성음절, 초성, 중성, 종성]
+const QZ_POOL = [
+  // ㄱ 받침
+  ['각','ㄱ','ㅏ','ㄱ'],['낙','ㄴ','ㅏ','ㄱ'],['닥','ㄷ','ㅏ','ㄱ'],['락','ㄹ','ㅏ','ㄱ'],
+  ['막','ㅁ','ㅏ','ㄱ'],['박','ㅂ','ㅏ','ㄱ'],['삭','ㅅ','ㅏ','ㄱ'],['악','ㅇ','ㅏ','ㄱ'],
+  ['작','ㅈ','ㅏ','ㄱ'],['착','ㅊ','ㅏ','ㄱ'],['학','ㅎ','ㅏ','ㄱ'],['먹','ㅁ','ㅓ','ㄱ'],
+  ['벽','ㅂ','ㅕ','ㄱ'],['복','ㅂ','ㅗ','ㄱ'],['녹','ㄴ','ㅗ','ㄱ'],['목','ㅁ','ㅗ','ㄱ'],
+  ['속','ㅅ','ㅗ','ㄱ'],['옥','ㅇ','ㅗ','ㄱ'],['북','ㅂ','ㅜ','ㄱ'],['국','ㄱ','ㅜ','ㄱ'],
+  ['묵','ㅁ','ㅜ','ㄱ'],['육','ㅇ','ㅜ','ㄱ'],['익','ㅇ','ㅣ','ㄱ'],['직','ㅈ','ㅣ','ㄱ'],
+  // ㄴ 받침
+  ['간','ㄱ','ㅏ','ㄴ'],['난','ㄴ','ㅏ','ㄴ'],['단','ㄷ','ㅏ','ㄴ'],['란','ㄹ','ㅏ','ㄴ'],
+  ['만','ㅁ','ㅏ','ㄴ'],['반','ㅂ','ㅏ','ㄴ'],['산','ㅅ','ㅏ','ㄴ'],['안','ㅇ','ㅏ','ㄴ'],
+  ['잔','ㅈ','ㅏ','ㄴ'],['찬','ㅊ','ㅏ','ㄴ'],['한','ㅎ','ㅏ','ㄴ'],['건','ㄱ','ㅓ','ㄴ'],
+  ['번','ㅂ','ㅓ','ㄴ'],['언','ㅇ','ㅓ','ㄴ'],['전','ㅈ','ㅓ','ㄴ'],['선','ㅅ','ㅓ','ㄴ'],
+  ['본','ㅂ','ㅗ','ㄴ'],['손','ㅅ','ㅗ','ㄴ'],['은','ㅇ','ㅡ','ㄴ'],['인','ㅇ','ㅣ','ㄴ'],
+  ['민','ㅁ','ㅣ','ㄴ'],['신','ㅅ','ㅣ','ㄴ'],['운','ㅇ','ㅜ','ㄴ'],['문','ㅁ','ㅜ','ㄴ'],
+  // ㄹ 받침
+  ['갈','ㄱ','ㅏ','ㄹ'],['날','ㄴ','ㅏ','ㄹ'],['달','ㄷ','ㅏ','ㄹ'],['말','ㅁ','ㅏ','ㄹ'],
+  ['발','ㅂ','ㅏ','ㄹ'],['살','ㅅ','ㅏ','ㄹ'],['알','ㅇ','ㅏ','ㄹ'],['잘','ㅈ','ㅏ','ㄹ'],
+  ['할','ㅎ','ㅏ','ㄹ'],['걸','ㄱ','ㅓ','ㄹ'],['벌','ㅂ','ㅓ','ㄹ'],['열','ㅇ','ㅕ','ㄹ'],
+  ['골','ㄱ','ㅗ','ㄹ'],['볼','ㅂ','ㅗ','ㄹ'],['솔','ㅅ','ㅗ','ㄹ'],['놀','ㄴ','ㅗ','ㄹ'],
+  ['울','ㅇ','ㅜ','ㄹ'],['물','ㅁ','ㅜ','ㄹ'],['불','ㅂ','ㅜ','ㄹ'],['일','ㅇ','ㅣ','ㄹ'],
+  ['길','ㄱ','ㅣ','ㄹ'],['밀','ㅁ','ㅣ','ㄹ'],['글','ㄱ','ㅡ','ㄹ'],['를','ㄹ','ㅡ','ㄹ'],
+  // ㅁ 받침
+  ['감','ㄱ','ㅏ','ㅁ'],['남','ㄴ','ㅏ','ㅁ'],['담','ㄷ','ㅏ','ㅁ'],['람','ㄹ','ㅏ','ㅁ'],
+  ['맘','ㅁ','ㅏ','ㅁ'],['밤','ㅂ','ㅏ','ㅁ'],['삼','ㅅ','ㅏ','ㅁ'],['암','ㅇ','ㅏ','ㅁ'],
+  ['잠','ㅈ','ㅏ','ㅁ'],['함','ㅎ','ㅏ','ㅁ'],['검','ㄱ','ㅓ','ㅁ'],['범','ㅂ','ㅓ','ㅁ'],
+  ['봄','ㅂ','ㅗ','ㅁ'],['솜','ㅅ','ㅗ','ㅁ'],['곰','ㄱ','ㅗ','ㅁ'],['놈','ㄴ','ㅗ','ㅁ'],
+  ['금','ㄱ','ㅡ','ㅁ'],['음','ㅇ','ㅡ','ㅁ'],['임','ㅇ','ㅣ','ㅁ'],['김','ㄱ','ㅣ','ㅁ'],
+  ['심','ㅅ','ㅣ','ㅁ'],['힘','ㅎ','ㅣ','ㅁ'],['움','ㅇ','ㅜ','ㅁ'],['숨','ㅅ','ㅜ','ㅁ'],
+  // ㅂ 받침
+  ['갑','ㄱ','ㅏ','ㅂ'],['납','ㄴ','ㅏ','ㅂ'],['답','ㄷ','ㅏ','ㅂ'],['랍','ㄹ','ㅏ','ㅂ'],
+  ['밥','ㅂ','ㅏ','ㅂ'],['삽','ㅅ','ㅏ','ㅂ'],['압','ㅇ','ㅏ','ㅂ'],['잡','ㅈ','ㅏ','ㅂ'],
+  ['합','ㅎ','ㅏ','ㅂ'],['법','ㅂ','ㅓ','ㅂ'],['섭','ㅅ','ㅓ','ㅂ'],['업','ㅇ','ㅓ','ㅂ'],
+  ['곱','ㄱ','ㅗ','ㅂ'],['봅','ㅂ','ㅗ','ㅂ'],['좁','ㅈ','ㅗ','ㅂ'],['입','ㅇ','ㅣ','ㅂ'],
+  // ㅅ 받침
+  ['갓','ㄱ','ㅏ','ㅅ'],['낫','ㄴ','ㅏ','ㅅ'],['닷','ㄷ','ㅏ','ㅅ'],['맛','ㅁ','ㅏ','ㅅ'],
+  ['밭','ㅂ','ㅏ','ㅅ'],['숯','ㅅ','ㅜ','ㅅ'],['옷','ㅇ','ㅗ','ㅅ'],['웃','ㅇ','ㅜ','ㅅ'],
+  ['빗','ㅂ','ㅣ','ㅅ'],['있','ㅇ','ㅣ','ㅅ'],['벗','ㅂ','ㅓ','ㅅ'],['솟','ㅅ','ㅗ','ㅅ'],
+  // ㅇ 받침
+  ['강','ㄱ','ㅏ','ㅇ'],['낭','ㄴ','ㅏ','ㅇ'],['당','ㄷ','ㅏ','ㅇ'],['랑','ㄹ','ㅏ','ㅇ'],
+  ['망','ㅁ','ㅏ','ㅇ'],['방','ㅂ','ㅏ','ㅇ'],['상','ㅅ','ㅏ','ㅇ'],['앙','ㅇ','ㅏ','ㅇ'],
+  ['장','ㅈ','ㅏ','ㅇ'],['창','ㅊ','ㅏ','ㅇ'],['항','ㅎ','ㅏ','ㅇ'],['경','ㄱ','ㅕ','ㅇ'],
+  ['명','ㅁ','ㅕ','ㅇ'],['병','ㅂ','ㅕ','ㅇ'],['영','ㅇ','ㅕ','ㅇ'],['정','ㅈ','ㅕ','ㅇ'],
+  ['공','ㄱ','ㅗ','ㅇ'],['동','ㄷ','ㅗ','ㅇ'],['몽','ㅁ','ㅗ','ㅇ'],['봉','ㅂ','ㅗ','ㅇ'],
+  ['송','ㅅ','ㅗ','ㅇ'],['용','ㅇ','ㅗ','ㅇ'],['종','ㅈ','ㅗ','ㅇ'],['홍','ㅎ','ㅗ','ㅇ'],
+  ['궁','ㄱ','ㅜ','ㅇ'],['뭉','ㅁ','ㅜ','ㅇ'],['붕','ㅂ','ㅜ','ㅇ'],['숭','ㅅ','ㅜ','ㅇ'],
+  ['응','ㅇ','ㅡ','ㅇ'],['층','ㅊ','ㅡ','ㅇ'],['형','ㅎ','ㅕ','ㅇ'],['냉','ㄴ','ㅐ','ㅇ'],
+  // ㄷ 받침
+  ['곧','ㄱ','ㅗ','ㄷ'],['받','ㅂ','ㅏ','ㄷ'],['얻','ㅇ','ㅓ','ㄷ'],['믿','ㅁ','ㅣ','ㄷ'],
+  ['걷','ㄱ','ㅓ','ㄷ'],['돋','ㄷ','ㅗ','ㄷ'],
+  // ㅊ 받침 (끝소리 규칙 ㄷ 대표음)
+  ['꽃','ㄲ','ㅗ','ㅊ'],['낯','ㄴ','ㅏ','ㅊ'],['빛','ㅂ','ㅣ','ㅊ'],['솥','ㅅ','ㅗ','ㅊ'],
+  // ㅌ 받침
+  ['밑','ㅁ','ㅣ','ㅌ'],['겉','ㄱ','ㅓ','ㅌ'],['끝','ㄲ','ㅡ','ㅌ'],['높','ㄴ','ㅗ','ㅌ'],
+  // ㅍ 받침
+  ['앞','ㅇ','ㅏ','ㅍ'],['깊','ㄱ','ㅣ','ㅍ'],['옆','ㅇ','ㅕ','ㅍ'],['숲','ㅅ','ㅜ','ㅍ'],
+  // ㅎ 받침
+  ['낳','ㄴ','ㅏ','ㅎ'],['쌓','ㅆ','ㅏ','ㅎ'],['놓','ㄴ','ㅗ','ㅎ'],['좋','ㅈ','ㅗ','ㅎ'],
+  ['넣','ㄴ','ㅓ','ㅎ'],
+  // ㄲ 받침
+  ['낚','ㄴ','ㅏ','ㄲ'],['긁','ㄱ','ㅡ','ㄲ'],['넋','ㄴ','ㅓ','ㄲ'],
+  // ㅆ 받침
+  ['있','ㅇ','ㅣ','ㅆ'],['없','ㅇ','ㅓ','ㅆ'],
+];
+
+// 받침 있는 음절 만들기 — 화이트리스트에서 직접 랜덤 선택
+function makeQSyllable() {
+  // ㄷ/ㄲ/ㅌ/ㅍ/ㅊ/ㅎ/ㅆ 받침 비율이 너무 낮지 않도록 풀 그대로 사용
+  // 단, 항목 형식이 [음절, 초성, 중성, 종성] 이므로 잘못된 항목 필터
+  const valid = QZ_POOL.filter(e => e.length === 4 && e[0].length === 1);
+  const pick = valid[Math.floor(Math.random() * valid.length)];
+  return { syllable: pick[0], cho: pick[1], jung: pick[2], jong: pick[3] };
+}
+
+function combineKorean3(cho, jung, jong) {
+  const CHO  = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const JUNG = ['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+  const JONG = ['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const ci = CHO.indexOf(cho);
+  const vi = JUNG.indexOf(jung);
+  const ji = JONG.indexOf(jong);
+  if (ci < 0 || vi < 0 || ji < 0) return cho + jung + jong;
+  return String.fromCharCode(0xAC00 + (ci * 21 + vi) * 28 + ji);
+}
+
+let qzSpinning = false;
+let qzInterval = null;
+let qzCurrentSyl = null; // { syllable, cho, jung, jong }
+
+function openQuizModal() {
+  qzSpinning = false;
+  qzCurrentSyl = null;
+  if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+
+  const overlay = document.getElementById('qzModal');
+  const choBox  = document.getElementById('qzCho');
+  const jungBox = document.getElementById('qzJung');
+  const jongBox = document.getElementById('qzJong');
+  const combo   = document.getElementById('qzCombo');
+  const animStg = document.getElementById('qzAnimStage');
+  const hint    = document.getElementById('qzHint');
+  const hintBtn = document.getElementById('qzHintBtn');
+  const closeBtn= document.getElementById('qzCloseBtn');
+  const xBtn    = document.getElementById('qzXBtn');
+
+  // 초기화
+  choBox.textContent  = '?'; choBox.className  = 'qz-box qz-cho';
+  jungBox.textContent = '?'; jungBox.className = 'qz-box qz-jung';
+  jongBox.textContent = '?'; jongBox.className = 'qz-box qz-jong';
+  combo.style.display = '';
+  animStg.style.display = 'none';
+  animStg.innerHTML = '';
+  hint.textContent  = '초성 + 중성 + 종성을 합쳐 읽어보세요! 🔊';
+  hintBtn.style.display = 'none';
+  closeBtn.disabled = true;
+  xBtn.style.display = 'none';
+
+  overlay.classList.add('active');
+
+  // 3칸 동시 스핀
+  startQzSpin();
+}
+
+function startQzSpin() {
+  if (qzSpinning) return;
+  qzSpinning = true;
+
+  const choBox  = document.getElementById('qzCho');
+  const jungBox = document.getElementById('qzJung');
+  const jongBox = document.getElementById('qzJong');
+
+  // 스핀 풀
+  const choPools  = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+  const jungPools = ['ㅏ','ㅐ','ㅓ','ㅔ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'];
+  const jongPools = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'];
+
+  let count = 0;
+  const total = 20;
+
+  qzInterval = setInterval(() => {
+    choBox.textContent  = choPools[Math.floor(Math.random()*choPools.length)];
+    jungBox.textContent = jungPools[Math.floor(Math.random()*jungPools.length)];
+    jongBox.textContent = jongPools[Math.floor(Math.random()*jongPools.length)];
+    choBox.className  = 'qz-box qz-cho spinning';
+    jungBox.className = 'qz-box qz-jung spinning';
+    jongBox.className = 'qz-box qz-jong spinning';
+    playModalClick();
+    count++;
+    if (count >= total) {
+      clearInterval(qzInterval);
+      qzInterval = null;
+
+      // 최종 음절 생성
+      const syl = makeQSyllable();
+
+      qzCurrentSyl = syl;
+      choBox.textContent  = syl.cho;  choBox.className  = 'qz-box qz-cho done';
+      jungBox.textContent = syl.jung; jungBox.className = 'qz-box qz-jung done';
+      jongBox.textContent = syl.jong; jongBox.className = 'qz-box qz-jong done';
+      playModalChime();
+      qzSpinning = false;
+
+      document.getElementById('qzHintBtn').style.display = '';
+      document.getElementById('qzCloseBtn').disabled = false;
+      document.getElementById('qzXBtn').style.display = 'flex';
+    }
+  }, 70);
+}
+
+function showQzHint() {
+  if (!qzCurrentSyl) return;
+  const syl = qzCurrentSyl;
+  document.getElementById('qzHintBtn').style.display = 'none';
+
+  const combo   = document.getElementById('qzCombo');
+  const animStg = document.getElementById('qzAnimStage');
+  combo.style.display = 'none';
+  animStg.style.display = 'flex';
+  animStg.innerHTML = '';
+
+  const isTopBot = TB_VOWS.includes(syl.jung);
+
+  if (isTopBot) {
+    animStg.innerHTML = `
+      <div class="anim-block-3" id="qzAnimBlock">
+        <div class="anim3-cons-tb"  id="qzAnimCho">${syl.cho}</div>
+        <div class="anim3-vowel-tb" id="qzAnimJung">${syl.jung}</div>
+        <div class="anim3-batchim"  id="qzAnimJong">${syl.jong}</div>
+        <div class="anim3-result"   id="qzAnimResult">${syl.syllable}</div>
+      </div>`;
+  } else {
+    animStg.innerHTML = `
+      <div class="anim-block-3" id="qzAnimBlock">
+        <div class="anim3-cons-lr"  id="qzAnimCho">${syl.cho}</div>
+        <div class="anim3-vowel-lr" id="qzAnimJung">${syl.jung}</div>
+        <div class="anim3-batchim"  id="qzAnimJong">${syl.jong}</div>
+        <div class="anim3-result"   id="qzAnimResult">${syl.syllable}</div>
+      </div>`;
+  }
+
+  const aC = document.getElementById('qzAnimCho');
+  const aV = document.getElementById('qzAnimJung');
+  const aJ = document.getElementById('qzAnimJong');
+  const aR = document.getElementById('qzAnimResult');
+  const aB = document.getElementById('qzAnimBlock');
+
+  // Phase 1: 초성
+  setTimeout(() => {
+    aC.style.animation = isTopBot
+      ? 'jamoFlyTop 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards'
+      : 'jamoFlyLeft 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards';
+  }, 60);
+  // Phase 2: 중성
+  setTimeout(() => {
+    aV.style.animation = isTopBot
+      ? 'jamoFlyBottom 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards'
+      : 'jamoFlyRight 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards';
+  }, 220);
+  // Phase 3: 받침 (아래서 올라옴)
+  setTimeout(() => {
+    aJ.style.animation = 'jamoFlyBottom3 0.52s cubic-bezier(0.34,1.4,0.64,1) forwards';
+  }, 480);
+  // Phase 4: 블록 글로우
+  setTimeout(() => {
+    aB.style.animation = 'blockGlow 0.65s ease-out forwards';
+  }, 900);
+  // Phase 5: 자모 사라짐
+  setTimeout(() => {
+    aC.style.animation = 'jamoFade 0.28s ease-in forwards';
+    aV.style.animation = 'jamoFade 0.28s ease-in forwards';
+    aJ.style.animation = 'jamoFade 0.28s ease-in forwards';
+  }, 1100);
+  // Phase 6: 결합 글자 등장
+  setTimeout(() => {
+    aR.style.animation = 'resultBurst 0.62s cubic-bezier(0.34,1.56,0.64,1) forwards';
+    playModalChime();
+  }, 1300);
+}
+
+function closeQzModal() {
+  if (qzSpinning) return;
+  document.getElementById('qzModal').classList.remove('active');
+  if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
+  qzSpinning = false;
+  qzCurrentSyl = null;
+}
+
+// 버튼 이벤트 연결
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('qzHintBtn').addEventListener('click', showQzHint);
+  document.getElementById('qzCloseBtn').addEventListener('click', closeQzModal);
+  document.getElementById('qzXBtn').addEventListener('click', closeQzModal);
+  // 오버레이 바깥 클릭으로 닫기
+  document.getElementById('qzModal').addEventListener('click', (e) => {
+    if (e.target === document.getElementById('qzModal') && !qzSpinning) closeQzModal();
+  });
+});
 
 // 자음 + 모음 → 한글 한 글자 조합
 function combineKorean(cons, vowel) {
