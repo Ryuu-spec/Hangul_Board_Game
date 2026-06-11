@@ -328,6 +328,39 @@ html, body {
 }
 .modal-hint-btn:hover  { background: #FFE066; box-shadow: 0 0 22px rgba(255,212,59,0.6); }
 .modal-hint-btn:active { transform: scale(0.96); }
+.modal-tts-btn {
+  background: #4fc3f7;
+  color: #003c5a;
+  border: none;
+  padding: 11px 26px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  box-shadow: 0 0 16px rgba(79,195,247,0.4);
+  transition: transform 0.1s, background 0.2s;
+}
+.modal-tts-btn:hover  { background: #81d4fa; }
+.modal-tts-btn:active { transform: scale(0.96); }
+.qz-tts-btn {
+  background: #4fc3f7;
+  color: #003c5a;
+  border: none;
+  padding: 10px 22px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  border-radius: 50px;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 0 12px rgba(79,195,247,0.4);
+  transition: transform 0.1s, background 0.2s;
+}
+.qz-tts-btn:hover  { background: #81d4fa; }
+.qz-tts-btn:active { transform: scale(0.96); }
 /* 합체 결과 행 */
 .modal-result-row {
   align-items: center;
@@ -894,6 +927,7 @@ html, body {
         <p class="qz-hint" id="qzHint">초성 + 중성 + 종성을 합쳐 읽어보세요! 🔊</p>
         <div class="qz-btn-row">
           <button class="qz-hint-btn" id="qzHintBtn" style="display:none;">💡 Show Answer</button>
+          <button class="qz-tts-btn" id="qzTtsBtn" onclick="speakQzResult()" style="display:none;">🔊 Listen</button>
         </div>
       </div>
     </div>
@@ -911,6 +945,7 @@ html, body {
     <p class="modal-hint" id="modalHint">Combine and read it aloud!</p>
     <div class="modal-btn-row">
       <button class="modal-hint-btn" id="modalHintBtn" onclick="showHint()" style="display:none;">💡 Show Answer</button>
+      <button class="modal-tts-btn" id="modalTtsBtn" onclick="speakCombined()" style="display:none;">🔊 Listen</button>
     </div>
     <button class="modal-x-btn" id="modalCloseBtn" onclick="closeSpinner()">✕</button>
   </div>
@@ -1259,6 +1294,11 @@ function closeSpinner() {
     modalInterval = null;
   }
   modalSpinning = false;
+  // TTS 버튼 숨기기 및 재생 중지
+  const ttsBtn = document.getElementById('modalTtsBtn');
+  if (ttsBtn) ttsBtn.style.display = 'none';
+  document.getElementById('modalHint').style.display = '';
+  speechSynthesis.cancel();
 }
 
 // ===== ? 칸 받침 퀴즈 =====
@@ -1521,6 +1561,7 @@ function showQzHint() {
   if (!qzCurrentSyl) return;
   const syl = qzCurrentSyl;
   document.getElementById('qzHintBtn').style.display = 'none';
+  document.getElementById('qzHint').style.display = 'none';
 
   const combo   = document.getElementById('qzCombo');
   const animStg = document.getElementById('qzAnimStage');
@@ -1580,10 +1621,13 @@ function showQzHint() {
     aV.style.animation = 'jamoFade 0.28s ease-in forwards';
     aJ.style.animation = 'jamoFade 0.28s ease-in forwards';
   }, 1100);
-  // Phase 6: 결합 글자 등장
+  // Phase 6: 결합 글자 등장 + TTS 버튼 표시
   setTimeout(() => {
     aR.style.animation = 'resultBurst 0.62s cubic-bezier(0.34,1.56,0.64,1) forwards';
     playModalChime();
+    // TTS 버튼 표시
+    const ttsBtn = document.getElementById('qzTtsBtn');
+    if (ttsBtn) ttsBtn.style.display = '';
   }, 1300);
 }
 
@@ -1593,6 +1637,11 @@ function closeQzModal() {
   if (qzInterval) { clearInterval(qzInterval); qzInterval = null; }
   qzSpinning = false;
   qzCurrentSyl = null;
+  // TTS 버튼 숨기기 및 재생 중지
+  const ttsBtn = document.getElementById('qzTtsBtn');
+  if (ttsBtn) ttsBtn.style.display = 'none';
+  document.getElementById('qzHint').style.display = '';
+  speechSynthesis.cancel();
 }
 
 // 버튼 이벤트 연결
@@ -1623,6 +1672,7 @@ const TB_VOWS = ['ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅢ','ㅟ','ㅚ','ㅝ'];
 function showHint() {
   const combined = combineKorean(currentCons, currentVowel);
   document.getElementById('modalHintBtn').style.display = 'none';
+  document.getElementById('modalHint').style.display = 'none';
 
   // combo 숨기고 애니메이션 스테이지 보이기
   const combo = document.getElementById('modalCombo');
@@ -1680,11 +1730,35 @@ function showHint() {
     animVowel.style.animation = 'jamoFade 0.28s ease-in forwards';
   }, 960);
 
-  // Phase 5: 결합 글자 등장
+  // Phase 5: 결합 글자 등장 + TTS 버튼 표시
   setTimeout(() => {
     animResult.style.animation = 'resultBurst 0.62s cubic-bezier(0.34,1.56,0.64,1) forwards';
     playModalChime();
+    // TTS 버튼 표시
+    const ttsBtn = document.getElementById('modalTtsBtn');
+    if (ttsBtn) ttsBtn.style.display = '';
   }, 1160);
+}
+
+// ── TTS 함수 (스피너 모달) ──────────────────────────────────────────
+function speakCombined() {
+  const combined = combineKorean(currentCons, currentVowel);
+  if (!combined) return;
+  const utter = new SpeechSynthesisUtterance(combined);
+  utter.lang = 'ko-KR';
+  utter.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+// ── TTS 함수 (받침 퀴즈 모달) ──────────────────────────────────────
+function speakQzResult() {
+  if (!qzCurrentSyl) return;
+  const utter = new SpeechSynthesisUtterance(qzCurrentSyl.syllable);
+  utter.lang = 'ko-KR';
+  utter.rate = 0.85;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
 }
 
 // 오버레이 바깥 클릭으로 닫기 (회전 끝난 후만)
