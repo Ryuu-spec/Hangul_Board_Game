@@ -998,6 +998,18 @@ function shuffle(arr) {
   return a;
 }
 
+// 자음 배열 사이에 모음을 랜덤으로 삽입 (자음 순서 유지)
+function insertVowelsIntoConsonants(cons, vows) {
+  const result = [...cons];
+  const positions = [];
+  for (let i = 0; i <= result.length; i++) positions.push(i);
+  const insertPositions = shuffle(positions).slice(0, vows.length).sort((a,b)=>b-a);
+  insertPositions.forEach((pos, i) => result.splice(pos, 0, vows[i]));
+  return result;
+}
+
+// boardIndex: 자모 칸의 순서 인덱스 (0~34) → 스피너 파트너 결정에 사용
+const boardCharData = {}; // key: 'col-row', value: {type, char, boardIndex, neighborCons:[]}
 function openSpinner(type, char, triggerCell, level) {
   if (type === 'question') {
     openQuizModal(level || 1);
@@ -1017,39 +1029,34 @@ const QZ_LEVEL_MAP = {
 };
 
 // ===== 유효 음절 매핑 (무의미 조합 제외) =====
-// 쉬운/중간 모음 (11개) — 모든 자음과 결합 가능 (ㅃ 포함)
-const EASY_MID_VOWS = ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ'];
-
-// 각 자음별 추가로 허용되는 어려운 모음 (ㅡ ㅢ ㅟ ㅚ ㅝ ㅘ 중에서만)
-const EXTRA_HARD_VOWS = {
+// v55: 자음 19개 × 모음 전체를 전수 검토하여 실존 음절만 자음별로 명시.
+// 기준: 표준어 단어·어미·통용 외래어에 실제 등장하는 음절.
+// 축약형(져·죠·쳐·쪄)과 외래어 음절(뮤·듀·뷰·튜·큐·퓨 등)은 유지하고
+// SPECIAL_SYLLABLES에 💬/🌍 마커로 표시. 감탄사 전용(꺄·캬·햐)은 제외.
+const VALID_VOWELS_FOR_CONS = {
   // ── 쉬운 자음 ─────────────────────────────
-  'ㅇ': ['ㅡ','ㅢ','ㅟ','ㅚ','ㅝ','ㅘ'], // 으 의 위 외 워 와
-  'ㄴ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 느 뉘 뇌 놔
-  'ㅁ': ['ㅡ','ㅚ','ㅝ'],                // 므 뫼📖 뭐
-  'ㄱ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 그 귀 괴 과
-  'ㄷ': ['ㅡ','ㅟ','ㅚ','ㅝ'],           // 드 뒤 되 둬
-  'ㅂ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 브 뷔🌍 뵈 봐
-  'ㅎ': ['ㅡ','ㅢ','ㅟ','ㅚ','ㅘ'],      // 흐 희 휘 회 화
-  'ㅅ': ['ㅡ','ㅟ','ㅚ'],                // 스 쉬 쇠
-  'ㅈ': ['ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],      // 즈 쥐 죄 줘 좌
+  'ㅇ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅢ','ㅟ','ㅚ','ㅝ','ㅘ'], // 전체 가능
+  'ㄴ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ','ㅘ'],           // 냐(어미) 뇨(당뇨) 뉴🌍
+  'ㅁ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅚ','ㅝ'],                     // 먀✗ / 며 묘 뮤🌍
+  'ㄱ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ','ㅘ'],           // 갸(갸름) 교 규
+  'ㄷ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅗ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ','ㅝ'],                          // 댜뎌됴✗ / 듀🌍
+  'ㅂ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ','ㅘ'],                     // 뱌뵤✗ / 벼 뷰🌍
+  'ㅎ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅢ','ㅟ','ㅚ','ㅘ'],           // 햐✗ / 혀 효 휴
+  'ㅅ': ['ㅏ','ㅐ','ㅑ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ'],                // 샤🌍 셔🌍 쇼🌍 슈🌍
+  'ㅈ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅣ','ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],                // 쟈쥬✗ / 져💬 죠💬
   // ── 중간 자음 ─────────────────────────────
-  'ㄹ': ['ㅡ','ㅟ','ㅚ','ㅘ'],           // 르 뤼🌍 뢰🌍 롸💬
-  'ㅋ': ['ㅡ','ㅟ','ㅝ','ㅘ'],           // 크 퀴 쿼🌍 콰🌍
-  'ㅌ': ['ㅡ','ㅢ','ㅟ','ㅚ'],           // 트 틔 튀 퇴
-  'ㅍ': ['ㅡ'],                          // 프 (어려운 모음 중 ㅡ만)
-  'ㅊ': ['ㅡ','ㅟ','ㅚ','ㅝ'],           // 츠 취 최 춰🌍
+  'ㄹ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅚ','ㅘ'],                // 랴✗ / 려(격려) 료 류
+  'ㅋ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅜ','ㅠ','ㅣ','ㅡ','ㅟ','ㅝ','ㅘ'],                     // 캬쿄✗ / 켜 큐🌍
+  'ㅌ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅗ','ㅜ','ㅠ','ㅣ','ㅡ','ㅢ','ㅟ','ㅚ'],                          // 탸텨툐✗ / 튜🌍
+  'ㅍ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅣ','ㅡ'],                               // 퍄✗ / 펴 표 퓨🌍
+  'ㅊ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅜ','ㅣ','ㅡ','ㅟ','ㅚ','ㅝ'],                          // 챠쵸츄✗ / 쳐💬
   // ── 어려운 자음(된소리) ──────────────────
-  'ㄲ': ['ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],      // 끄 뀌 꾀 꿔🌍 꽈
-  'ㄸ': ['ㅡ','ㅢ','ㅟ'],                // 뜨 띄 뛰
-  'ㅃ': ['ㅡ'],                          // 쁘 (예쁘다 기쁘다 바쁘다 나쁘다)
-  'ㅆ': ['ㅡ','ㅚ','ㅘ'],                // 쓰 쐬 쏴
-  'ㅉ': ['ㅡ','ㅚ']                      // 쯔 쬐
+  'ㄲ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅜ','ㅣ','ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'],                     // 꺄꾜뀨✗ / 께(함께) 껴
+  'ㄸ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅗ','ㅜ','ㅣ','ㅡ','ㅢ','ㅟ'],                                    // 땨뗘뚀뜌✗
+  'ㅃ': ['ㅏ','ㅐ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅣ','ㅡ'],                                         // 뺘뻬쀼✗ / 뼈 뾰(뾰족)
+  'ㅆ': ['ㅏ','ㅐ','ㅓ','ㅗ','ㅜ','ㅣ','ㅡ','ㅚ','ㅘ'],                                         // 쌰쎄쎠쑈쓔✗ / 쌔(쌔근쌔근)
+  'ㅉ': ['ㅏ','ㅐ','ㅓ','ㅔ','ㅕ','ㅗ','ㅜ','ㅣ','ㅡ','ㅚ']                                     // 쨔쬬쮸✗ / 쩨 쪄💬
 };
-
-// 각 자음별 최종 허용 모음 풀 = 쉬운/중간 모음 + 자음별 어려운 모음
-const VALID_VOWELS_FOR_CONS = Object.fromEntries(
-  CONS.map(c => [c, [...EASY_MID_VOWS, ...EXTRA_HARD_VOWS[c]]])
-);
 
 // 모음 칸에 도착했을 때, 해당 모음과 결합 가능한 자음 풀
 function validConsonantsForVowel(vowel) {
@@ -1058,21 +1065,94 @@ function validConsonantsForVowel(vowel) {
 
 // 특수 음절 (외래어/구어체/고유어) — 나중에 팝업 힌트용
 const SPECIAL_SYLLABLES = {
+  // 🌍 외래어
   '뤼':'🌍','뢰':'🌍','쿼':'🌍','콰':'🌍','뷔':'🌍','춰':'🌍','꿔':'🌍',
-  '롸':'💬',
+  '뉴':'🌍','뮤':'🌍','듀':'🌍','뷰':'🌍','튜':'🌍','큐':'🌍','퓨':'🌍',
+  '샤':'🌍','셔':'🌍','쇼':'🌍','슈':'🌍',
+  // 💬 구어체/축약형
+  '롸':'💬','져':'💬','죠':'💬','쳐':'💬','쪄':'💬',
+  // ㅐ (ㅔ 칸 스피너 병행 노출 — 보드 배치 없음)
+  '걔':'💬','얘':'💬',
+  // 📖 고유어/옛말
   '뫼':'📖'
 };
 
 // ===== 난이도 곡선 (보드 배치용) =====
-// 자음 19개 — 쉬운 9 / 중간 5 / 어려운 5
-const EASY_CONS = ['ㅇ','ㄴ','ㅁ','ㄱ','ㄷ','ㅂ','ㅎ','ㅅ','ㅈ'];
-const MID_CONS  = ['ㄹ','ㅋ','ㅌ','ㅍ','ㅊ'];
+// 쉬운 자음: 3묶음으로 세분화 (묶음 내에서만 랜덤)
+const EASY_CONS_G1 = ['ㅇ','ㄴ','ㅁ'];        // 비음/무음
+const EASY_CONS_G2 = ['ㄱ','ㄷ','ㅂ'];        // 기본 파열음
+const EASY_CONS_G3 = ['ㅎ','ㅅ','ㅈ'];        // 마찰음/파찰음
+const EASY_CONS    = [...EASY_CONS_G1, ...EASY_CONS_G2, ...EASY_CONS_G3]; // 전체 9개 (참조용)
+
+// 중간 자음: ㄹ 항상 첫 번째, 나머지 랜덤
+const MID_CONS_FIRST = ['ㄹ'];
+const MID_CONS_REST  = ['ㅋ','ㅌ','ㅍ','ㅊ'];
+const MID_CONS       = [...MID_CONS_FIRST, ...MID_CONS_REST]; // 전체 5개 (참조용)
+
+// 어려운 자음: 전체 랜덤
 const HARD_CONS = ['ㄲ','ㄸ','ㅃ','ㅆ','ㅉ'];
 
-// 모음 16개 (보드 표시용) — 쉬운 5 / 중간 6 / 어려운 5
-const EASY_VOWS_BOARD = ['ㅏ','ㅗ','ㅜ','ㅣ','ㅑ'];
-const MID_VOWS_BOARD  = ['ㅓ','ㅕ','ㅛ','ㅠ','ㅔ','ㅐ'];
-const HARD_VOWS_BOARD = ['ㅡ','ㅢ','ㅟ','ㅚ','ㅝ'];
+// 모음 — 쉬운 5 / 중간 5 / 어려운 6
+// v55: ㅑ↔ㅓ 스왑 — 기본 단모음(ㅏㅗㅜㅣㅓ) 먼저, 파생 이중모음(ㅑㅕㅛㅠ)은 중간 구간에
+const EASY_VOWS_BOARD = ['ㅏ','ㅗ','ㅜ','ㅣ','ㅓ'];
+const MID_VOWS_BOARD  = ['ㅑ','ㅕ','ㅛ','ㅠ','ㅔ'];
+// ㅢ 제거, ㅘ 추가 (조합 다양성 기준)
+// 어려운 모음: ㅡ ㅟ ㅚ — 조합 풍부 / ㅝ ㅘ — 조합 적음(앞 배치)
+const HARD_VOWS_BOARD       = ['ㅡ','ㅟ','ㅚ','ㅝ','ㅘ'];        // 전체
+const HARD_VOWS_BOARD_FRONT = ['ㅝ','ㅘ'];                       // 조합 적음 → 앞 6칸 우선 배치
+const HARD_VOWS_BOARD_BACK  = ['ㅡ','ㅟ','ㅚ'];                  // 조합 풍부 → 뒤 5칸
+
+// 어려운 자음별 맞춤 파트너 모음 풀
+// ㄲ: 조합 풍부 → 중간+어려운 모음 / ㄸㅃㅆㅉ: 어려운 모음 조합 적음 → 중간 모음
+const HARD_CONS_RICH = ['ㄲ'];                                    // 어려운 모음과 조합 풍부
+const HARD_CONS_MID  = ['ㄸ','ㅃ','ㅆ','ㅉ'];                    // 중간 모음까지만
+
+// ===== 스피너 파트너 풀 정의 =====
+function getPartnerPool(fixedChar, boardIndex, type) {
+
+  // ── 쉬운 구간 (0~13) ──
+  if (boardIndex <= 13) {
+    if (type === 'cons') return EASY_VOWS_BOARD;
+    return null; // 모음 → neighborCons 사용
+  }
+
+  // ── 중간 구간 (14~23) ──
+  if (boardIndex >= 14 && boardIndex <= 18) {
+    // 앞 5칸: 새 자모 + 쉬운 파트너
+    return type === 'cons' ? EASY_VOWS_BOARD : EASY_CONS;
+  }
+  if (boardIndex >= 19 && boardIndex <= 23) {
+    // 뒤 5칸: 자음 칸 → 쉬운+중간 모음 / 모음 칸 → 쉬운+중간 자음
+    // (v55: 실존 음절 필터로 중간끼리 풀이 빈약해져 양방향 확장)
+    return type === 'cons'
+      ? [...EASY_VOWS_BOARD, ...MID_VOWS_BOARD]
+      : [...EASY_CONS, ...MID_CONS];
+  }
+
+  // ── 어려운 구간 (24~34) ──
+  if (boardIndex >= 24 && boardIndex <= 29) {
+    // 앞 6칸: 중간 파트너 (완충)
+    // v55: 된소리(ㄲ 포함)는 완충 구간에서 쉬운+중간 모음 풀 사용 (i+1: 새 자모 + 익숙한 파트너)
+    if (type === 'cons') {
+      return HARD_CONS.includes(fixedChar)
+        ? [...EASY_VOWS_BOARD, ...MID_VOWS_BOARD]
+        : MID_VOWS_BOARD;
+    }
+    return [...MID_CONS, ...EASY_CONS];
+  }
+  // 뒤 5칸 (30~34): 자모별 맞춤 풀
+  if (type === 'cons') {
+    // ㄲ → 중간+어려운 모음 / ㄸㅃㅆㅉ → 쉬운+중간 모음 (v55)
+    return HARD_CONS_RICH.includes(fixedChar)
+      ? [...MID_VOWS_BOARD, ...HARD_VOWS_BOARD]
+      : [...EASY_VOWS_BOARD, ...MID_VOWS_BOARD];
+  } else {
+    // ㅝ ㅘ → 쉬운+중간 자음 / ㅡ ㅟ ㅚ → 중간+어려운 자음
+    return HARD_VOWS_BOARD_FRONT.includes(fixedChar)
+      ? [...EASY_CONS, ...MID_CONS]
+      : [...MID_CONS, ...HARD_CONS];
+  }
+}
 
 // 게임 진행 순서 (반시계방향: START 왼쪽 → 아래 → 오른쪽 → 위 → GOAL)
 // 자모 칸 35개만 (고정 칸 제외)
@@ -1147,9 +1227,20 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
   // type='vowel' → 모음 칸 도착, 자음을 스피너로 뽑음
   let pool, modeClass, titleText, hintText, layout;
 
+  // triggerCell에서 boardIndex와 neighborCons 가져오기
+  const cellKey = triggerCell ? `${triggerCell.dataset.col}-${triggerCell.dataset.row}` : null;
+  const cellData = cellKey ? boardCharData[cellKey] : null;
+  const boardIndex = cellData ? cellData.boardIndex : 0;
+
   if (type === 'cons') {
-    // 해당 자음과 결합 가능한 모음 풀만 사용
-    pool = VALID_VOWELS_FOR_CONS[fixedChar] || VOWS;
+    // 보드 위치 기반 파트너 모음 풀
+    const posPool = getPartnerPool(fixedChar, boardIndex, 'cons');
+    // ㅔ가 풀에 있으면 ㅐ도 함께 포함 (보드 배치는 ㅔ만 유지, 스피너에서만 병행 노출)
+    const extPool = posPool.includes('ㅔ') ? [...posPool, 'ㅐ'] : posPool;
+    // VALID_VOWELS_FOR_CONS로 무의미 음절 필터링
+    const validVows = VALID_VOWELS_FOR_CONS[fixedChar] || VOWS;
+    pool = extPool.filter(v => validVows.includes(v));
+    if (pool.length === 0) pool = validVows; // fallback
     modeClass = 'consonant-mode';
     titleText = 'Hangul Vowel Shuffle';
     hintText  = 'Blend and say it! 🔊';
@@ -1158,9 +1249,18 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
       <div class="modal-operator">+</div>
       <div class="modal-char-box modal-spin" id="modalSpinBox">?</div>`;
   } else {
-    // 해당 모음과 결합 가능한 자음 풀만 사용
-    pool = validConsonantsForVowel(fixedChar);
-    if (pool.length === 0) pool = CONS; // fallback (이론상 발생 안 함)
+    // 보드 위치 기반 파트너 자음 풀
+    const posPool = getPartnerPool(fixedChar, boardIndex, 'vowel');
+    if (posPool === null && cellData) {
+      // 쉬운 구간 모음 → 이웃 자음 사용
+      pool = cellData.neighborCons.length > 0 ? cellData.neighborCons : EASY_CONS;
+    } else {
+      pool = posPool || EASY_CONS;
+    }
+    // 해당 모음과 결합 가능한 자음으로만 필터링
+    const validCons = validConsonantsForVowel(fixedChar);
+    if (validCons.length > 0) pool = pool.filter(c => validCons.includes(c));
+    if (pool.length === 0) pool = validCons.length > 0 ? validCons : CONS;
     modeClass = 'vowel-mode';
     titleText = 'Hangul Consonant Shuffle';
     hintText  = 'Blend and say it! 🔊';
@@ -1784,25 +1884,66 @@ function buildBoard() {
 
   // ── 난이도 구간별로 자모를 셔플하여 좌표에 배치 ──
   // 같은 구간 내에서는 위치가 랜덤이지만 구간 순서는 보장됨
-  const earlyChars = shuffle([
-    ...EASY_CONS.map(c => ({type:'cons',  char:c})),
-    ...EASY_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
-  ]);
-  const midChars = shuffle([
-    ...MID_CONS.map(c => ({type:'cons',  char:c})),
-    ...MID_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
-  ]);
-  const hardChars = shuffle([
-    ...HARD_CONS.map(c => ({type:'cons',  char:c})),
-    ...HARD_VOWS_BOARD.map(v => ({type:'vowel', char:v}))
-  ]);
-  const orderedChars = [...earlyChars, ...midChars, ...hardChars]; // 14+11+10 = 35
+  // ── 쉬운 구간 (14칸): 자음 3묶음 순서 유지, 모음 사이사이 랜덤 삽입 ──
+  const g1 = shuffle(EASY_CONS_G1.map(c => ({type:'cons', char:c})));
+  const g2 = shuffle(EASY_CONS_G2.map(c => ({type:'cons', char:c})));
+  const g3 = shuffle(EASY_CONS_G3.map(c => ({type:'cons', char:c})));
+  const easyVows = shuffle(EASY_VOWS_BOARD.map(v => ({type:'vowel', char:v})));
+  const easyCons = [...g1, ...g2, ...g3];
+  const earlyChars = insertVowelsIntoConsonants(easyCons, easyVows);
 
-  // 좌표 → 자모 매핑
+  // ── 중간 구간 (10칸): ㄹ 항상 맨 앞, 나머지 자음 랜덤, 모음 랜덤 삽입 ──
+  const midConsOrdered = [
+    {type:'cons', char:'ㄹ'},
+    ...shuffle(MID_CONS_REST.map(c => ({type:'cons', char:c})))
+  ];
+  const midVows = shuffle(MID_VOWS_BOARD.map(v => ({type:'vowel', char:v})));
+  const midChars = insertVowelsIntoConsonants(midConsOrdered, midVows);
+
+  // ── 어려운 구간 (11칸) ──
+  // 앞 6칸: ㅝ ㅘ(조합 적은 모음 2) + 자음 3 + 중간모음 1(완충)
+  // 뒤 5칸: 자음 2 + 모음 3(ㅡ ㅟ ㅚ)
+  const hardConsShuf = shuffle(HARD_CONS.map(c => ({type:'cons', char:c})));
+  const hardFront6 = shuffle([
+    ...HARD_VOWS_BOARD_FRONT.map(v => ({type:'vowel', char:v})),
+    ...hardConsShuf.slice(0, 3),
+    {type:'vowel', char: MID_VOWS_BOARD[Math.floor(Math.random()*MID_VOWS_BOARD.length)]}
+  ]);
+  const hardBack5 = shuffle([
+    ...hardConsShuf.slice(3, 5),
+    ...HARD_VOWS_BOARD_BACK.map(v => ({type:'vowel', char:v}))
+  ]);
+  const hardChars = [...hardFront6, ...hardBack5]; // 6+5=11
+  const orderedChars = [...earlyChars, ...midChars, ...hardChars]; // 14+10+11=35
+
   const charByPos = {};
+  Object.keys(boardCharData).forEach(k => delete boardCharData[k]); // 초기화
   LETTER_ORDER.forEach((pos, i) => {
-    charByPos[`${pos.col}-${pos.row}`] = orderedChars[i];
+    const key = `${pos.col}-${pos.row}`;
+    charByPos[key] = orderedChars[i];
+    boardCharData[key] = { type: orderedChars[i].type, char: orderedChars[i].char, boardIndex: i, neighborCons: [] };
   });
+
+  // 쉬운 구간(0~13) 모음의 이웃 자음 계산
+  // boardIndex 기준으로 앞뒤 자음을 neighborCons에 저장
+  for (let i = 0; i < 14; i++) {
+    const pos = LETTER_ORDER[i];
+    const key = `${pos.col}-${pos.row}`;
+    if (boardCharData[key].type === 'vowel') {
+      const neighbors = [];
+      if (i > 0) {
+        const prev = boardCharData[`${LETTER_ORDER[i-1].col}-${LETTER_ORDER[i-1].row}`];
+        if (prev && prev.type === 'cons') neighbors.push(prev.char);
+      }
+      if (i < 13) {
+        const next = boardCharData[`${LETTER_ORDER[i+1].col}-${LETTER_ORDER[i+1].row}`];
+        if (next && next.type === 'cons') neighbors.push(next.char);
+      }
+      // 이웃 자음이 없으면 쉬운 자음 전체 사용
+      boardCharData[key].neighborCons = neighbors.length > 0 ? neighbors : EASY_CONS;
+    }
+  }
+
 
   // 가운데 패널 추가
   const cp = document.createElement("div");
@@ -1879,6 +2020,8 @@ function buildBoard() {
     cell.className = 'cell';
     cell.style.gridColumn = pos.col;
     cell.style.gridRow = pos.row;
+    cell.dataset.col = pos.col;
+    cell.dataset.row = pos.row;
 
     if (fixed === 'start') {
       cell.classList.add('start');
