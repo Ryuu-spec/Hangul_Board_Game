@@ -148,6 +148,27 @@ html, body {
   box-shadow: 0 8px 32px rgba(0,0,0,0.5);
 }
 .info-popup.open { display: block; }
+.info-popup-close {
+  position: absolute;
+  top: -14px; right: -14px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: #1a1a1a;
+  color: white;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+  transition: background 0.15s, transform 0.1s;
+  z-index: 10;
+  line-height: 1;
+}
+.info-popup-close:hover  { background: #444; }
+.info-popup-close:active { transform: scale(0.92); }
 .info-popup-title {
   font-size: calc(var(--cell) * 0.18);
   color: #5599ff;
@@ -1954,6 +1975,7 @@ function buildBoard() {
           </svg>
         </button>
         <div class="info-popup" id="infoPopup">
+          <button class="info-popup-close" onclick="document.getElementById('infoPopup').classList.remove('open')">&#10005;</button>
           <p class="info-popup-title">How to play</p>
           <div class="info-popup-row">
             <span class="info-popup-num">1.</span>
