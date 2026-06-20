@@ -2061,6 +2061,14 @@ function buildBoard() {
     }
     board.appendChild(cell);
   });
+
+  // col:7, row:1은 POSITIONS에 없어서 그리드 빈칸이 됨
+  // → START(col:6)와 GOAL(col:8)이 각각 넓어지는 버그 방지용 spacer
+  const spacer = document.createElement('div');
+  spacer.style.gridColumn = '7';
+  spacer.style.gridRow = '1';
+  spacer.style.visibility = 'hidden';
+  board.appendChild(spacer);
 }
 
 function getDiceSVG(num) {
