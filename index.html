@@ -936,7 +936,7 @@ html, body {
   <div class="qz-modal-wrap">
     <div class="qz-modal">
       <div class="qz-inner">
-        <div id="qzTitle" class="qz-title"><span class="spark">✦</span>Batchim Quiz<span class="spark">✦</span></div>
+        <div id="qzTitle" class="qz-title"><span class="spark">✦</span>받침 퀴즈<span class="spark">✦</span></div>
         <div class="qz-combo" id="qzCombo">
           <div class="qz-box qz-cho"  id="qzCho">?</div>
           <div class="qz-operator">+</div>
@@ -947,8 +947,8 @@ html, body {
         <div class="qz-anim-stage" id="qzAnimStage"></div>
         <p class="qz-hint" id="qzHint">초성 + 중성 + 종성을 합쳐 읽어보세요! 🔊</p>
         <div class="qz-btn-row">
-          <button class="qz-hint-btn" id="qzHintBtn" style="display:none;">💡 Show Answer</button>
-          <button class="qz-tts-btn" id="qzTtsBtn" onclick="speakQzResult()" style="display:none;">🔊 Listen</button>
+          <button class="qz-hint-btn" id="qzHintBtn" style="display:none;">💡 정답 보기</button>
+          <button class="qz-tts-btn" id="qzTtsBtn" onclick="speakQzResult()" style="display:none;">🔊 듣기</button>
         </div>
       </div>
     </div>
@@ -963,10 +963,10 @@ html, body {
     <div class="modal-combo" id="modalCombo"></div>
     <div class="modal-result-row" id="modalResultRow"></div>
     <div class="modal-anim-stage" id="modalAnimStage"></div>
-    <p class="modal-hint" id="modalHint">Combine and read it aloud!</p>
+    <p class="modal-hint" id="modalHint">합쳐서 소리 내어 읽어보세요!</p>
     <div class="modal-btn-row">
-      <button class="modal-hint-btn" id="modalHintBtn" onclick="showHint()" style="display:none;">💡 Show Answer</button>
-      <button class="modal-tts-btn" id="modalTtsBtn" onclick="speakCombined()" style="display:none;">🔊 Listen</button>
+      <button class="modal-hint-btn" id="modalHintBtn" onclick="showHint()" style="display:none;">💡 정답 보기</button>
+      <button class="modal-tts-btn" id="modalTtsBtn" onclick="speakCombined()" style="display:none;">🔊 듣기</button>
     </div>
     <button class="modal-x-btn" id="modalCloseBtn" onclick="closeSpinner()">✕</button>
   </div>
@@ -1264,7 +1264,7 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
     if (pool.length === 0) pool = validVows; // fallback
     modeClass = 'consonant-mode';
     titleText = 'Hangul Vowel Shuffle';
-    hintText  = 'Blend and say it! 🔊';
+    hintText  = '합쳐서 읽어보세요! 🔊';
     layout = `
       <div class="modal-char-box modal-fixed">${fixedChar}</div>
       <div class="modal-operator">+</div>
@@ -1284,7 +1284,7 @@ function showSpinnerModal(type, fixedChar, triggerCell) {
     if (pool.length === 0) pool = validCons.length > 0 ? validCons : CONS;
     modeClass = 'vowel-mode';
     titleText = 'Hangul Consonant Shuffle';
-    hintText  = 'Blend and say it! 🔊';
+    hintText  = '합쳐서 읽어보세요! 🔊';
     layout = `
       <div class="modal-char-box modal-spin" id="modalSpinBox">?</div>
       <div class="modal-operator">+</div>
@@ -1426,11 +1426,11 @@ function closeSpinner() {
 // ===== ? 칸 받침 퀴즈 — 5단계 음절 풀 =====
 // 레벨별 타이틀·힌트·색상
 const QZ_META = {
-  1: { title: '📗 Batchim Quiz ①', hint: 'ㅇ·ㄴ·ㅁ batchim — nasal sounds flowing through nose and mouth! 🔊' },
-  2: { title: '📘 Batchim Quiz ②', hint: 'ㄱ·ㄷ·ㅂ batchim — the airflow stops as your mouth closes! 💪' },
-  3: { title: '📙 Batchim Quiz ③', hint: 'ㄹ batchim — touch your tongue tip to the ridge behind your upper teeth! 👅' },
-  4: { title: '📕 Batchim Quiz ④', hint: 'ㅅ·ㅈ·ㅊ·ㅋ·ㅌ·ㅍ·ㅎ batchim — spelling ≠ sound! Representative sound rule 🌸' },
-  5: { title: '🏆 Batchim Quiz ⑤', hint: 'Double batchim! Add 다 to read it — 읽다·없다·앉다… Become a batchim master! 🏆' },
+  1: { title: '📗 받침 퀴즈 ①', hint: 'ㅇ·ㄴ·ㅁ 받침 — 코와 입으로 울리는 비음이에요! 🔊' },
+  2: { title: '📘 받침 퀴즈 ②', hint: 'ㄱ·ㄷ·ㅂ 받침 — 입을 닫으면서 공기 흐름이 멈춰요! 💪' },
+  3: { title: '📙 받침 퀴즈 ③', hint: 'ㄹ 받침 — 혀끝을 윗니 뒤 잇몸에 살짝 대어보세요! 👅' },
+  4: { title: '📕 받침 퀴즈 ④', hint: 'ㅅ·ㅈ·ㅊ·ㅋ·ㅌ·ㅍ·ㅎ 받침 — 쓰는 것과 소리가 달라요! 대표음 규칙 🌸' },
+  5: { title: '🏆 받침 퀴즈 ⑤', hint: '겹받침! 다 를 붙여 읽어보세요 — 읽다·없다·앉다… 받침 마스터가 되어보세요! 🏆' },
 };
 const QZ_LEVEL_COLOR = {
   1: '#7BC67E', 2: '#64B6F7', 3: '#F7B24C', 4: '#FF8A65', 5: '#C77DFF',
@@ -1963,10 +1963,10 @@ function buildBoard() {
   cp.innerHTML = `
     <img class="title" src="${BASE}title.png" alt="Hangul Board Game" style="width:80%; object-fit:contain; padding:0; margin:0; margin-top: calc(var(--cell) * 1.1);">
     <div class="controls" style="margin-top:2px;">
-      <div class="ctrl-box"><span class="ctrl-label">Roll the die</span><button class="dice-btn" id="dice-btn" onclick="rollDice(this)"></button></div>
-      <div class="ctrl-box"><span class="ctrl-label">Reset Button</span><button class="reset-btn" onclick="playClickSound(); buildBoard()"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1 1 1.5 4.8" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polyline points="4,8 4,12 8,12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      <div class="ctrl-box"><span class="ctrl-label">주사위</span><button class="dice-btn" id="dice-btn" onclick="rollDice(this)"></button></div>
+      <div class="ctrl-box"><span class="ctrl-label">리셋</span><button class="reset-btn" onclick="playClickSound(); buildBoard()"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1 1 1.5 4.8" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polyline points="4,8 4,12 8,12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
       <div class="ctrl-box" style="position:relative;">
-        <span class="ctrl-label">How to play</span>
+        <span class="ctrl-label">게임 방법</span>
         <button class="info-btn" onclick="document.getElementById('infoPopup').classList.toggle('open')">
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="9" stroke="#222" stroke-width="2"/>
@@ -1976,40 +1976,40 @@ function buildBoard() {
         </button>
         <div class="info-popup" id="infoPopup">
           <button class="info-popup-close" onclick="document.getElementById('infoPopup').classList.remove('open')">&#10005;</button>
-          <p class="info-popup-title">How to play</p>
+          <p class="info-popup-title">게임 방법</p>
           <div class="info-popup-row">
             <span class="info-popup-num">1.</span>
-            <span class="info-popup-text">Roll the die and move your piece</span>
+            <span class="info-popup-text">주사위를 굴려 말을 이동하세요</span>
           </div>
           <div class="info-popup-row">
             <span class="info-popup-num">2.</span>
             <div>
-              <div class="info-popup-text">Land on a tile &#x2192; spinner appears</div>
-              <div class="info-popup-text">Blend and say it aloud!</div>
+              <div class="info-popup-text">자모 칸에 멈추면 스피너가 나타나요</div>
+              <div class="info-popup-text">합쳐서 소리 내어 읽어보세요!</div>
               <div class="info-badge-wrap">
-                <span class="info-badge-ok">Success &#x2192; stay</span>
-                <span class="info-badge-fail">Fail &#x2192; go back</span>
+                <span class="info-badge-ok">성공 &#x2192; 그대로</span>
+                <span class="info-badge-fail">실패 &#x2192; 뒤로</span>
               </div>
             </div>
           </div>
           <div class="info-popup-row">
             <img class="tile-icon" src="https://cdn.jsdelivr.net/gh/Ryuu-spec/Hangul_Board_Game@main/image/question.png" alt="?">
             <div>
-              <div class="info-popup-text">Batchim quiz &#x2014; read with final consonant</div>
+              <div class="info-popup-text">받침 퀴즈 &#x2014; 받침까지 읽어보세요</div>
               <div class="info-badge-wrap">
-                <span class="info-badge-ok">Success &#x2192; stay</span>
-                <span class="info-badge-fail">Fail &#x2192; go back</span>
+                <span class="info-badge-ok">성공 &#x2192; 그대로</span>
+                <span class="info-badge-fail">실패 &#x2192; 뒤로</span>
               </div>
             </div>
           </div>
           <div class="info-popup-row">
             <img class="tile-icon" src="https://cdn.jsdelivr.net/gh/Ryuu-spec/Hangul_Board_Game@main/image/mission.png" alt="탈">
-            <span class="info-popup-text">Event tile &#x2014; click the lucky bag!</span>
+            <span class="info-popup-text">이벤트 칸 &#x2014; 복주머니를 클릭하세요!</span>
           </div>
           <hr class="info-popup-divider">
           <div class="info-popup-row">
             <span class="info-popup-num" style="color:#ffd700;">&#x1F3C6;</span>
-            <span class="info-popup-text">First to reach GOAL wins!</span>
+            <span class="info-popup-text">가장 먼저 GOAL에 도착하면 승리!</span>
           </div>
         </div>
       </div>
