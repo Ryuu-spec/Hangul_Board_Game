@@ -18,8 +18,8 @@ html, body {
 }
 .board {
   display: grid;
-  grid-template-columns: repeat(13, var(--cell));
-  grid-template-rows: repeat(7, var(--cell));
+  grid-template-columns: repeat(13, minmax(0, var(--cell)));
+  grid-template-rows: repeat(7, minmax(0, var(--cell)));
   gap: var(--gap);
   position: relative; /* 드래그 중인 말 토큰의 absolute 기준 */
 }
@@ -46,7 +46,7 @@ html, body {
   height: 100%;
   object-fit: contain;
 }
-.cell.start, .cell.goal { cursor: default; border: none; }
+.cell.start, .cell.goal { cursor: default; border: none; width: var(--cell); height: var(--cell); max-width: var(--cell); max-height: var(--cell); }
 .cell.fixed { cursor: default; }
 .center-panel {
   grid-column: 5 / 10;
@@ -2068,6 +2068,9 @@ function buildBoard() {
   spacer.style.gridColumn = '7';
   spacer.style.gridRow = '1';
   spacer.style.visibility = 'hidden';
+  spacer.style.width = 'var(--cell)';
+  spacer.style.height = 'var(--cell)';
+  spacer.style.flexShrink = '0';
   board.appendChild(spacer);
 }
 
