@@ -1965,7 +1965,7 @@ function buildBoard() {
   cp.style.gridColumn = "5 / 10";
   cp.style.gridRow = "2 / 7";
   cp.innerHTML = `
-    <img class="title" src="${BASE}title.png" alt="Hangul Board Game" style="width:80%; object-fit:contain; padding:0; margin:0; margin-top: calc(var(--cell) * 1.1);">
+    <img class="title" src="${BASE}title.png" alt="Hangul Board Game" style="width:80%; object-fit:contain; padding:0; margin:0;">
     <div class="controls" style="margin-top:2px;">
       <div class="ctrl-box"><span class="ctrl-label">Roll the die</span><button class="dice-btn" id="dice-btn" onclick="rollDice(this)"></button></div>
       <div class="ctrl-box"><span class="ctrl-label">Reset</span><button class="reset-btn" onclick="playClickSound(); buildBoard()"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1 1 1.5 4.8" stroke="white" stroke-width="2.5" stroke-linecap="round"/><polyline points="4,8 4,12 8,12" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
