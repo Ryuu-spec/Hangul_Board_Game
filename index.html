@@ -2066,15 +2066,22 @@ function buildBoard() {
     board.appendChild(cell);
   });
 
-  // col:7, row:1은 POSITIONS에 없어서 그리드 빈칸이 됨
-  // → START(col:6)와 GOAL(col:8)이 각각 넓어지는 버그 방지용 spacer
-  const spacer = document.createElement('div');
-  spacer.style.gridColumn = '7';
-  spacer.style.gridRow = '1';
-  spacer.style.visibility = 'hidden';
-  spacer.style.width = 'var(--cell)';
-  spacer.style.height = 'var(--cell)';
-  board.appendChild(spacer);
+  // 빈 grid 칸 spacer — 옆 셀이 늘어나는 버그 방지
+  const addSpacer = (col, row) => {
+    const s = document.createElement('div');
+    s.style.gridColumn = col;
+    s.style.gridRow = row;
+    s.style.visibility = 'hidden';
+    s.style.width = 'var(--cell)';
+    s.style.height = 'var(--cell)';
+    board.appendChild(s);
+  };
+  // col:7, row:1 (START↔GOAL 사이)
+  addSpacer(7, 1);
+  // row:2 — col:2~4, col:10~12 빈칸 → col:1,row:2 / col:13,row:2 늘어남 방지
+  [2,3,4,10,11,12].forEach(c => addSpacer(c, 2));
+  // row:6 — col:2~4, col:10~12 빈칸 → col:1,row:6 / col:13,row:6 늘어남 방지
+  [2,3,4,10,11,12].forEach(c => addSpacer(c, 6));
 }
 
 function getDiceSVG(num) {
